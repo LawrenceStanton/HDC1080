@@ -17,12 +17,17 @@
  */
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
+#include <optional>
+
+#ifdef HDC1080_GTEST_TESTING
+#include "gtest/gtest.h"
+#endif
 
 #define HDC1080_I2C_ADDR 0x40u
 #define HDC1080_MEM_SIZE 2u
 
-/* Register Addresses */
+/* uint16_t Addresses */
 #define HDC1080_TEMPERATURE_ADDR	 0x00u
 #define HDC1080_HUMIDITY_ADDR		 0x01u
 #define HDC1080_CONFIG_ADDR			 0x02u
@@ -30,7 +35,7 @@
 #define HDC1080_MANUFACTURER_ID_ADDR 0xFEu
 #define HDC1080_DEVICE_ID_ADDR		 0xFFu
 
-/* Register Address Sizes (in bytes) */
+/* uint16_t Address Sizes (in bytes) */
 #define HDC1080_TEMPERATURE_ADDR_SIZE	  2u
 #define HDC1080_HUMIDITY_ADDR_SIZE		  2u
 #define HDC1080_CONFIG_ADDR_SIZE		  2u
@@ -45,230 +50,216 @@
 #define HDC1080_MANUFACTURER_ID_ADDR_PORV 0x5449u
 #define HDC1080_DEVICE_ID_ADDR_PORV		  0x1050u
 
-/**
- * @note Define this constant in order to implement variables and methods for computing the floating point measurement
- * values.
- */
-#define HDC1080_IMPLEMENT_FLOAT_VARIABLES
+#define HDC1080_CONFIG_RESET 0x8000u
 
-/**
- * @note 	Due to the endianness of a system and the use of variable types in this driver, it may or may not
- * 			be necessary to swap the first and last bytes of a 2-byte value when typecasting from 8-bit value
- * 			to a 16-bit. The 8-bit values are primarily used for I2C transactions, which are 1-byte sized.
- */
-#define HDC1080_LITTLE_ENDIAN // Define this variable if the system is set to little endian format. Else comment out.
-#ifdef HDC1080_LITTLE_ENDIAN
-#define __HDC1080_UINT16_REVERSE_CAST(__REG__) (((__REG__ << 8) & 0xFF00) | ((__REG__ >> 8) & 0x00FF))
-#else
-#define __HDC1080_UINT16_REVERSE_CAST(__REG__) __REG__
-#endif /* HDC1080_LITTLE_ENDIAN */
-
-/**
- * @note 	Due to the endianness of a system and the use of variable types in this driver, it may or may not
- * 			be necessary to swap the first and last bytes of a 2-byte value when typecasting from 8-bit value
- * 			to a 16-bit. The 8-bit values are primarily used for I2C transactions, which are 1-byte sized.
- */
 class HDC1080 {
 public:
-	/* Measurement Register Class Copies */
-	volatile uint16_t tReg = 0x0000;
-	volatile uint16_t hReg = 0x0000;
+	enum class AcqModeConfig : uint16_t {
+		SINGLE = 0x0000u,
+		DUAL   = 0x0100u,
+	};
 
-#ifdef HDC1080_IMPLEMENT_FLOAT_VARIABLES
-	/* Real Measurement Class Copies */
-	volatile float T = -273.0;
-	volatile float H = 0.0;
-#endif /* HDC1080_IMPLEMENT_FLOAT_VARIABLES */
+	enum class TempResolutionConfig : uint16_t {
+		A_14BIT = 0x0000u,
+		A_11BIT = 0x0040u,
+	};
 
-	/* Configuration Setting Enumerations */
-	enum class AcqModeConfig : uint16_t;
-	enum class HeaterConfig : uint16_t;
-	enum class TempResolutionConfig : uint16_t;
-	enum class HumidityResolutionConfig : uint16_t;
-	enum class Status : int;
+	enum class HumidityResolutionConfig : uint16_t {
+		A_14BIT = 0x0000u,
+		A_11BIT = 0x0010u,
+		A_8BIT	= 0x0020u,
+	};
 
-	/* Constructors and Destructors */
+	enum class HeaterConfig : uint16_t {
+		OFF = 0x2000u,
+		ON	= 0x0000u,
+	};
+
+	/**
+	 * @brief I2C interface for the HDC1080.
+	 *
+	 * @details
+	 * This interface is used to abstract the I2C communication from the HDC1080 class.
+	 * A concrete implementation is then aggregated by the HDC1080 class.
+	 * The concrete implementation of this interface should be provided by the user.
+	 * This also allows for the HDC1080 class to be tested without the need for an I2C bus.
+	 * The concrete implementation's lifetime must be managed by the user and must outlive the HDC1080 class.
+	 * It is recommended that the concrete implementation be a static object.
+	 */
+	class I2C {
+	public:
+		typedef uint8_t	 MemoryAddress; // Every HDC1080 memory address is 8 bits wide.
+		typedef uint16_t Register;		// Every HDC1080 register is 16 bits wide.
+
+		/**
+		 * @brief Read a register from the HDC1080.
+		 *
+		 * @param memoryAddress The HDC1080 internal memory address of the register to read.
+		 * @return std::optional<Register> The value of the register if the read was successful.
+		 */
+		virtual std::optional<Register> read(MemoryAddress memoryAddress)				  = 0;
+		/**
+		 * @brief Write a register to the HDC1080.
+		 *
+		 * @param memoryAddress The HDC1080 internal memory address of the register to write.
+		 * @param data The data to write to the register.
+		 * @return std::optional<Register> The value written to the register if the write was successful.
+		 */
+		virtual std::optional<Register> write(MemoryAddress memoryAddress, Register data) = 0;
+
+		/**
+		 * @brief Transmit a byte of data to the HDC1080.
+		 *
+		 * @param data The byte of data to transmit.
+		 * @return std::optional<uint8_t> The byte of data transmitted to the HDC1080 if successful.
+		 *
+		 * @note This function is normally used to get measurement data from the HDC1080, where some measurement
+		 * delays are necessary, and therefore this driver will assume implementation of the I2C protocol.
+		 */
+		virtual std::optional<uint8_t> transmit(uint8_t data) = 0;
+		/**
+		 * @brief Receive a byte of data from the HDC1080.
+		 *
+		 * @return std::optional<uint8_t> The byte of data received from the HDC1080 if successful.
+		 *
+		 * @note This function is normally used to get measurement data from the HDC1080, where some measurement
+		 * delays are necessary, and therefore this driver will assume implementation of the I2C protocol.
+		 */
+		virtual std::optional<uint8_t> receive()			  = 0;
+
+		/**
+		 * @brief Delay for a given number of milliseconds.
+		 *
+		 * @note This need not be a precise delay.
+		 *
+		 * @param ms The number of milliseconds to delay for.
+		 */
+		virtual void delay(uint32_t ms) = 0;
+	};
+
+protected:
+	I2C &i2c;
+
+public:
+	/**
+	 * @brief Construct a new HDC1080::HDC1080 object given all configuration settings.
+	 *
+	 * @param acqMode	The Mode of Acquisition (single or dual measurements).
+	 * @param tRes		The resolution of the temperature measurement (11 or 14 bit).
+	 * @param hRes		The resolution of the humidity measurement (8, 11, or 14 bit).
+	 * @param heater	The heater setting (on or off).
+	 */
 	HDC1080(
-		AcqModeConfig			 acqMode,
-		TempResolutionConfig	 tRes,
-		HumidityResolutionConfig hRes,
-		HeaterConfig			 heater,
-		uint16_t				 ID
+		I2C						&i2c,												   // I2C Driver
+		AcqModeConfig			 acqMode = HDC1080::AcqModeConfig::DUAL,			   // Acquisition Mode
+		TempResolutionConfig	 tRes	 = HDC1080::TempResolutionConfig::A_14BIT,	   // Temperature Resolution
+		HumidityResolutionConfig hRes	 = HDC1080::HumidityResolutionConfig::A_14BIT, // Humidity Resolution
+		HeaterConfig			 heater	 = HDC1080::HeaterConfig::OFF				   // Heater On/Off
 	);
 
-	inline ~HDC1080() { softReset(); }
+	// inline ~HDC1080() { softReset(); }
 
-	void softReset();
+	/**
+	 * @brief Triggers a software reset of the HDC1080 by setting the respective bit in the configuration register.
+	 */
+	// inline void softReset() { setuint16_t(HDC1080_CONFIG_ADDR, HDC1080_CONFIG_RESET); };
 
-#ifdef HDC1080_IMPLEMENT_FLOAT_VARIABLES
-	/* Real Measurement Get Methods */
+	/* Floating Point Measurement Conversion Methods */
+	/**
+	 * @brief Updates the uint16_t and real class copies of the temperature measurement.
+	 *
+	 * @return float The updated real temperature measurement.
+	 */
+	static float getTemperature(uint16_t temperatureRegister);
+
+	/**
+	 * @brief Get the Temperature
+	 *
+	 * @return float The updated real temperature measurement.
+	 *
+	 * @note In the event of failure, this results in T = -40.0.
+	 */
 	float getTemperature();
-	float getHumidity();
-	void  getTemperatureHumidity();
-#endif /* HDC1080_IMPLEMENT_FLOAT_VARIABLES */
 
-	/* Measurement Register Get Methods */
-	uint16_t getTemperatureRegister();
-	uint16_t getHumidityRegister();
-	void	 getTemperatureHumidityRegisters();
+	/**
+	 * @brief Updates the uint16_t and real class copies of the humidity measurement.
+	 *
+	 * @return float The updated real humidity measurement.
+	 *
+	 * @note In the event of hReg = 0x0000u, which might indicate a failure, this results in H = 0.0.
+	 */
+	static float getHumidity(uint16_t humidityRegister);
+
+	/**
+	 * @brief Get the Humidity
+	 *
+	 * @return float The updated real humidity measurement.
+	 *
+	 * @note In the event of failure, this results in H = 0.0.
+	 */
+	float getHumidity();
+
+private:
+	/**
+	 * @brief Get the Temperature Register
+	 *
+	 * @return std::optional<I2C::Register> The fetched value of the temperature register if successful.
+	 */
+	std::optional<I2C::Register> getTemperatureRegister();
+	/**
+	 * @brief Get the Humidity Register
+	 *
+	 * @return std::optional<I2C::Register> The fetched value of the humidity register if successful.
+	 */
+	std::optional<I2C::Register> getHumidityRegister();
 
 	/* Other Device Information Get Methods */
-	inline uint16_t getDeviceID() { return getRegister(HDC1080_DEVICE_ID_ADDR); }
-	inline uint16_t getManufacturerID() { return getRegister(HDC1080_MANUFACTURER_ID_ADDR); }
-	uint64_t		getSerialID();
-	// bool	 getBatteryStatus();	TODO
+	// inline std::optional<uint16_t> getDeviceID() { return getuint16_t(HDC1080_DEVICE_ID_ADDR); }
+	// inline std::optional<uint16_t> getManufacturerID() { return getuint16_t(HDC1080_MANUFACTURER_ID_ADDR); }
+	// std::optional<uint64_t>		   getSerialID();
+
+	// std::optional<bool> getBatteryStatus();	// TODO
 
 	/* 	TODO: Individual Device Setting Setter Methods
-
 	void setAcquisitionMode(AcqModeConfig acqMode);
 	void setTemperatureResolution(TempResolutionConfig tRes);
 	void setHumidityResolution(HumidityResolutionConfig hRes);
 	void setHeater(HeaterConfig heater);
-
 	*/
 
-private:
-	uint8_t ID; // User-defined identifier. To be used by host application to identify device in multi-HDC1080 system.
-
-#ifdef HDC1080_IMPLEMENT_FLOAT_VARIABLES
-	/* Real Measurement Updating Methods */
-	void updateTemperature();
-	void updateHumidity();
-#endif /* HDC1080_IMPLEMENT_FLOAT_VARIABLES */
-
-	/* Configuration Register Getters and Setters */
-	void
-	setConfig(AcqModeConfig acqMode, TempResolutionConfig tRes, HumidityResolutionConfig hRes, HeaterConfig heater);
-	inline void		setConfig(uint16_t config) { setRegister(HDC1080_CONFIG_ADDR, config); }
-	inline uint16_t getConfig() { return getRegister(HDC1080_CONFIG_ADDR); }
-
-	/* General Purpose Register Getters and Setters */
-	uint16_t getRegister(uint8_t memAddr);
-	void	 setRegister(uint8_t memAddr, uint16_t data);
-	void	 getMeasurementRegisters(uint8_t memAddr, uint16_t waitTime, uint16_t *pData, uint8_t n);
-
-	/* System-level I2C communication methods. To be implemented by host application. */
-
 	/**
-	 * @brief Read a set amount of data via the I2C interface, given the device I2C and internal memory addresses.
+	 * @brief Sets the HDC1080 Configuration Register given all programmable settings.
 	 *
-	 * @param ID		The user-defined identifier of the HDC1080 class making this call.
-	 * @param i2cAddr	The I2C address. This driver will only ever call this with HDC1080_I2C_ADDR (0x40).
-	 * @param memAddr	The starting internal memory address to read from.
-	 * @param pData		Pointer to memory allocated for saving data read.
-	 * @param size		The size of pData, which is the amount of data to read over I2C.
-	 * @return HDC1080::Status HDC1080::Status::OK if success, else HDC1080::Status::FAIL_I2C.
+	 * @param acqMode	The Mode of Acquisition (single or dual measurements).
+	 * @param tRes		The resolution of the temperature measurement (11 or 14 bit).
+	 * @param hRes		The resolution of the humidity measurement (8, 11, or 14 bit).
+	 * @param heater	The heater setting (on or off).
 	 *
-	 * @note This method must be implemented by host application and based on the specific host system infrastructure.
-	 *
-	 * @note This mehtod is primarily used when reading general information but not measurements (due to measurement
-	 * conversion time).
-	 *
-	 * @note The HDC1080 will auto-increment the address pointer when reading multiple registers in one transaction.
-	 * 		 There is no need to manually increment the memory address pointer.
-	 * @note ID should be used to determine which physical I2C interface to use if there are multiple HDC1080s.
-	 * 		 Else this parameter is unused.
+	 * @note The heater should only be turned on if necessary for saturated conditions. Refer to the datasheet §8.3.3.
+	 * @note If only a single measurement is desired, the other measurement's resolution may be set to any valid value.
 	 */
-	static HDC1080::Status I2C_MemRead(uint8_t ID, uint8_t i2cAddr, uint8_t memAddr, uint8_t *pData, uint16_t size);
+	std::optional<I2C::Register> setConfig(
+		AcqModeConfig			 acqMode, //
+		TempResolutionConfig	 tRes,
+		HumidityResolutionConfig hRes,
+		HeaterConfig			 heater
+	);
 
-	/**
-	 * @brief Write a set amount of data via the I2C interface, given the device I2C and internal memory addresses.
-	 *
-	 * @param ID		The user-defined identifier of the HDC1080 class making this call.
-	 * @param i2cAddr	The I2C address. This driver will only ever call this with HDC1080_I2C_ADDR (0x40).
-	 * @param memAddr	The starting internal memory address to write to.
-	 * @param pData		Pointer to data to be written.
-	 * @param size		The size of pData, which is the amount of data to written over I2C.
-	 * @return HDC1080::Status HDC1080::Status::OK if success, else HDC1080::Status::FAIL_I2C.
-	 *
-	 * @note This method must be implemented by host application and based on the specific host system infrastructure.
-	 *
-	 * @note This method is primarily used when writing general information.
-	 *
-	 * @note The HDC1080 will auto-increment the address pointer when writing multiple registers in one transaction.
-	 * 		 There is no need to manually increment the memory address pointer.
-	 * @note ID should be used to determine which physical I2C interface to use if there are multiple HDC1080s.
-	 * 		 Else this parameter is unused.
-	 */
-	static HDC1080::Status I2C_MemWrite(uint8_t ID, uint8_t i2cAddr, uint8_t memAddr, uint8_t *pData, uint16_t size);
+	std::optional<I2C::Register> getMeasurementRegister(I2C::MemoryAddress memAddr, uint32_t waitTime = 0);
 
-	/**
-	 * @brief Send data onto the I2C bus, given the I2C address of the device to send to.
-	 *
-	 * @param ID		The user-defined identifier of the HDC1080 class making this call.
-	 * @param i2cAddr	The I2C address. This driver will only ever call this with HDC1080_I2C_ADDR (0x40).
-	 * @param pData		Pointer to data to be sent.
-	 * @param size		Size of pData, which is the amount of data to send.
-	 * @return HDC1080::Status HDC1080::Status::OK if success, else HDC1080::Status::FAIL_I2C.
-	 *
-	 * @note This method must be implemented by host application and based on the specific host system infrastructure.
-	 *
-	 * @note This methods is primarily used when fetching measurements, which require separation between memory
-	 * addressing and data transaction in order to insert a measurement conversion time delay.
-	 *
-	 * @note The HDC1080 will auto-increment the address pointer when writing multiple registers in one transaction.
-	 * 		 There is no need to manually increment the memory address pointer.
-	 * @note ID should be used to determine which physical I2C interface to use if there are multiple HDC1080s.
-	 * 		 Else this parameter is unused.
-	 */
-	static HDC1080::Status I2C_Transmit(uint8_t ID, uint8_t i2cAddr, uint8_t *pData, uint16_t size);
+/* Registration for Private Member Testing Purposes Only */
+#ifdef HDC1080_GTEST_TESTING
+	friend class HDC1080_Test;
 
-	/**
-	 * @brief Receive data from the I2C bus, given the I2C address of the device that will send data.
-	 *
-	 * @param ID		The user-defined identifier of the HDC1080 class making this call.
-	 * @param i2cAddr	The I2C address. This driver will only ever call this with HDC1080_I2C_ADDR (0x40).
-	 * @param pData		Pointer to memory to save received data to.
-	 * @param size		Size of pData, which is the amount of data to receive.
-	 * @return HDC1080::Status HDC1080::Status::OK if success, else HDC1080::Status::FAIL_I2C.
-	 *
-	 * @note This method must be implemented by host application and based on the specific host system infrastructure.
-	 *
-	 * @note This methods is primarily used when fetching measurements, which require separation between memory
-	 * addressing and data transaction in order to insert a measurement conversion time delay.
-	 *
-	 * @note The HDC1080 will auto-increment the address pointer when writing multiple registers in one transaction.
-	 * 		 There is no need to manually increment the memory address pointer.
-	 * @note ID should be used to determine which physical I2C interface to use if there are multiple HDC1080s.
-	 * 		 Else this parameter is unused.
-	 */
-	static HDC1080::Status I2C_Receive(uint8_t ID, uint8_t i2cAddr, uint8_t *pData, uint16_t size);
+	FRIEND_TEST(HDC1080_Test, getTemperatureRegisterNormallyReturnsValue);
+	FRIEND_TEST(HDC1080_Test, getTemperatureRegisterReturnsEmptyOptionalWhenI2CFails);
 
-	/**
-	 * @brief Delay the program execution by a set amount of time
-	 *
-	 * @param ms The delay time in milliseconds
-	 *
-	 * @note This method must be implemented by host application and based on the specific host system infrastructure.
-	 *
-	 * @note This need not be a precise delay.
-	 */
-	static inline void Delay(uint16_t ms);
+	FRIEND_TEST(HDC1080_Test, getHumidityRegisterNormallyReturnsValue);
+	FRIEND_TEST(HDC1080_Test, getHumidityRegisterReturnsEmptyOptionalWhenI2CReceiveFails);
+
+	FRIEND_TEST(HDC1080_Test, getMeasurementRegisterNormallyReturnsValue);
+	FRIEND_TEST(HDC1080_Test, getMeasurementRegisterReturnsEmptyOptionalWhenI2CReceiveFails);
+#endif
 };
-
-/**
- * @brief Heater configuration setting enumerable.
- */
-enum class HDC1080::HeaterConfig : uint16_t { OFF = 0x2000u, ON = 0x0000u };
-
-/**
- * @brief Aquisition mode setting enumerable.
- */
-enum class HDC1080::AcqModeConfig : uint16_t { SINGLE = 0x0000u, DUAL = 0x0100u };
-
-/**
- * @brief Temperature resolution setting enumerable.
- */
-enum class HDC1080::TempResolutionConfig : uint16_t { A_14BIT = 0x0000u, A_11BIT = 0x0040u };
-
-/**
- * @brief Humidity resolution setting enumberable.
- */
-enum class HDC1080::HumidityResolutionConfig : uint16_t { A_14BIT = 0x0000u, A_11BIT = 0x0010u, A_8BIT = 0x0020u };
-
-/**
- * @brief Internal method status return type / error code enumerable.
- */
-enum class HDC1080::Status : int { OK = 0, FAIL_I2C = -1, FAIL_INVALID_PARAMETER = -2 };
 
 /*** END OF FILE ***/
