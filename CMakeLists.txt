@@ -29,15 +29,11 @@ target_link_libraries(${EXECUTABLE} PUBLIC
 add_library(${PROJECT_NAME}::${EXECUTABLE} ALIAS ${EXECUTABLE})
 
 if(NOT CMAKE_CROSSCOMPILING)
-	option(HDC1080_CODE_COVERAGE "Enable code coverage for HDC1080" ON)
+	option(HDC1080_CODE_COVERAGE "Enable code coverage for HDC1080" OFF)
 
 	set(TEST_EXECUTABLE ${EXECUTABLE}_Test)
 
 	# Add addittional configuration to library target.
-	target_compile_definitions(${EXECUTABLE} INTERFACE
-		HDC1080_GTEST_TESTING
-	)
-
 	target_link_libraries(${EXECUTABLE} PRIVATE
 		GTest::gtest
 	)

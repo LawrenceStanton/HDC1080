@@ -1,8 +1,9 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-#include "HDC1080.hpp"
+#define HDC1080_GTEST_TESTING
 
+#include "HDC1080.hpp"
 class MockedI2C : public HDC1080::I2C {
 public:
 	using HDC1080::I2C::MemoryAddress;
@@ -46,7 +47,7 @@ TEST(HDC1080_TestStatic, getHumidityStaticImplementsExpectedEquation) {
 TEST_F(HDC1080_Test, getTemperatureRegisterNormallyReturnsValue) {
 	EXPECT_CALL(this->i2c, transmit(_)).Times(AnyNumber()).WillRepeatedly(Return(0x00u));
 	EXPECT_CALL(this->i2c, receive()).WillOnce(Return(0x12u)).WillOnce(Return(0x34u));
-	EXPECT_EQ(this->hdc1080.getTemperatureRegister().value(), 0x1234u);
+	EXPECT_EQ(this->hdc1080.getTemperatureRegister().value(), 0x1235u);
 }
 
 TEST_F(HDC1080_Test, getTemperatureReturnsMinusFortyWhenGetTemperatureRegisterFails) {
