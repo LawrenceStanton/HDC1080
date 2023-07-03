@@ -200,8 +200,20 @@ public:
 	float getHumidity();
 
 	/* Other Device Information Get Methods */
+	/**
+	 * @brief Get the Device ID of the HDC1080.
+	 *
+	 * @return std::optional<I2C::Register> 0x1050 if successful.
+	 */
 	inline std::optional<I2C::Register> getDeviceID() { return this->i2c.read(HDC1080_DEVICE_ID_ADDR); }
-	// inline std::optional<uint16_t> getManufacturerID() { return getuint16_t(HDC1080_MANUFACTURER_ID_ADDR); }
+
+	/**
+	 * @brief Get the Manufacturer ID of the HDC1080.
+	 *
+	 * @return std::optional<uint16_t> 0x5449 if successful.
+	 */
+	inline std::optional<uint16_t> getManufacturerID() { return this->i2c.read(HDC1080_MANUFACTURER_ID_ADDR); }
+
 	// std::optional<uint64_t>		   getSerialID();
 
 	// std::optional<bool> getBatteryStatus();	// TODO

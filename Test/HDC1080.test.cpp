@@ -111,3 +111,15 @@ TEST_F(HDC1080_Test, getDeviceIDReturnsEmptyOptionalWhenI2CReadFails) {
 	disableI2C();
 	EXPECT_EQ(this->hdc1080.getDeviceID(), std::nullopt);
 }
+
+TEST_F(HDC1080_Test, getManufacturerIDNormallyReturnsValue) {
+	const MemoryAddress manufacturerIDRegister = 0xFEu;
+	const Register		manufacturerID		   = 0x5449u;
+	EXPECT_CALL(this->i2c, read(Eq(manufacturerIDRegister))).WillOnce(Return(manufacturerID));
+	EXPECT_EQ(this->hdc1080.getManufacturerID().value(), manufacturerID);
+}
+
+TEST_F(HDC1080_Test, getManufacturerIDReturnsEmptyOptionalWhenI2CReadFails) {
+	disableI2C();
+	EXPECT_EQ(this->hdc1080.getManufacturerID(), std::nullopt);
+}
