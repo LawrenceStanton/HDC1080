@@ -4,11 +4,16 @@
 #define HDC1080_GTEST_TESTING
 
 #include "HDC1080.hpp"
+
+using ::testing::_;
+using ::testing::AnyNumber;
+using ::testing::Eq;
+using ::testing::Return;
+
+using MemoryAddress = HDC1080::I2C::MemoryAddress;
+using Register		= HDC1080::I2C::Register;
 class MockedI2C : public HDC1080::I2C {
 public:
-	using HDC1080::I2C::MemoryAddress;
-	using HDC1080::I2C::Register;
-
 	MOCK_METHOD(std::optional<Register>, read, (MemoryAddress addr), (final));
 	MOCK_METHOD(std::optional<Register>, write, (MemoryAddress addr, Register data), (final));
 	MOCK_METHOD(std::optional<uint8_t>, transmit, (uint8_t data), (final));
@@ -16,10 +21,6 @@ public:
 
 	void delay(uint32_t ms) final {}
 };
-
-using ::testing::_;
-using ::testing::AnyNumber;
-using ::testing::Return;
 
 class HDC1080_Test : public ::testing::Test {
 public:
@@ -47,7 +48,7 @@ TEST(HDC1080_TestStatic, getHumidityStaticImplementsExpectedEquation) {
 TEST_F(HDC1080_Test, getTemperatureRegisterNormallyReturnsValue) {
 	EXPECT_CALL(this->i2c, transmit(_)).Times(AnyNumber()).WillRepeatedly(Return(0x00u));
 	EXPECT_CALL(this->i2c, receive()).WillOnce(Return(0x12u)).WillOnce(Return(0x34u));
-	EXPECT_EQ(this->hdc1080.getTemperatureRegister().value(), 0x1235u);
+	EXPECT_EQ(this->hdc1080.getTemperatureRegister().value(), 0x1234u);
 }
 
 TEST_F(HDC1080_Test, getTemperatureReturnsMinusFortyWhenGetTemperatureRegisterFails) {
@@ -97,4 +98,16 @@ TEST_F(HDC1080_Test, getMeasurementRegisterNormallyReturnsValue) {
 TEST_F(HDC1080_Test, getMeasurementRegisterReturnsEmptyOptionalWhenI2CReceiveFails) {
 	disableI2C();
 	EXPECT_EQ(this->hdc1080.getMeasurementRegister(0x00u), std::nullopt);
+}
+
+TEST_F(HDC1080_Test, getDeviceIDNormallyReturnsValue) {
+	const MemoryAddress deviceIDRegister = 0xFFu;
+	const Register		deviceID		 = 0x1050u;
+	EXPECT_CALL(this->i2c, read(Eq(deviceIDRegister))).WillOnce(Return(deviceID));
+	EXPECT_EQ(this->hdc1080.getDeviceID().value(), deviceID);
+}
+
+TEST_F(HDC1080_Test, getDeviceIDReturnsEmptyOptionalWhenI2CReadFails) {
+	disableI2C();
+	EXPECT_EQ(this->hdc1080.getDeviceID(), std::nullopt);
 }

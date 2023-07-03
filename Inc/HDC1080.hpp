@@ -82,7 +82,7 @@ public:
 	 * This interface is used to abstract the I2C communication from the HDC1080 class.
 	 * A concrete implementation is then aggregated by the HDC1080 class.
 	 * The concrete implementation of this interface should be provided by the user.
-	 * This also allows for the HDC1080 class to be tested without the need for an I2C bus.
+	 * This also allows for the HDC1080 class to be tested without the need for a real I2C bus.
 	 * The concrete implementation's lifetime must be managed by the user and must outlive the HDC1080 class.
 	 * It is recommended that the concrete implementation be a static object.
 	 */
@@ -199,6 +199,13 @@ public:
 	 */
 	float getHumidity();
 
+	/* Other Device Information Get Methods */
+	inline std::optional<I2C::Register> getDeviceID() { return this->i2c.read(HDC1080_DEVICE_ID_ADDR); }
+	// inline std::optional<uint16_t> getManufacturerID() { return getuint16_t(HDC1080_MANUFACTURER_ID_ADDR); }
+	// std::optional<uint64_t>		   getSerialID();
+
+	// std::optional<bool> getBatteryStatus();	// TODO
+
 private:
 	/**
 	 * @brief Get the Temperature Register
@@ -212,13 +219,6 @@ private:
 	 * @return std::optional<I2C::Register> The fetched value of the humidity register if successful.
 	 */
 	std::optional<I2C::Register> getHumidityRegister();
-
-	/* Other Device Information Get Methods */
-	// inline std::optional<uint16_t> getDeviceID() { return getuint16_t(HDC1080_DEVICE_ID_ADDR); }
-	// inline std::optional<uint16_t> getManufacturerID() { return getuint16_t(HDC1080_MANUFACTURER_ID_ADDR); }
-	// std::optional<uint64_t>		   getSerialID();
-
-	// std::optional<bool> getBatteryStatus();	// TODO
 
 	/* 	TODO: Individual Device Setting Setter Methods
 	void setAcquisitionMode(AcqModeConfig acqMode);
