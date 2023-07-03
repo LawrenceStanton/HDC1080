@@ -54,27 +54,6 @@
 
 class HDC1080 {
 public:
-	enum class AcqModeConfig : uint16_t {
-		SINGLE = 0x0000u,
-		DUAL   = 0x0100u,
-	};
-
-	enum class TempResolutionConfig : uint16_t {
-		A_14BIT = 0x0000u,
-		A_11BIT = 0x0040u,
-	};
-
-	enum class HumidityResolutionConfig : uint16_t {
-		A_14BIT = 0x0000u,
-		A_11BIT = 0x0010u,
-		A_8BIT	= 0x0020u,
-	};
-
-	enum class HeaterConfig : uint16_t {
-		OFF = 0x2000u,
-		ON	= 0x0000u,
-	};
-
 	/**
 	 * @brief I2C interface for the HDC1080.
 	 *
@@ -137,6 +116,30 @@ public:
 		virtual void delay(uint32_t ms) = 0;
 	};
 
+	using MemoryAddress = I2C::MemoryAddress;
+	using Register		= I2C::Register;
+
+	enum class AcqModeConfig : uint16_t {
+		SINGLE = 0x0000u,
+		DUAL   = 0x0100u,
+	};
+
+	enum class TempResolutionConfig : uint16_t {
+		A_14BIT = 0x0000u,
+		A_11BIT = 0x0040u,
+	};
+
+	enum class HumidityResolutionConfig : uint16_t {
+		A_14BIT = 0x0000u,
+		A_11BIT = 0x0010u,
+		A_8BIT	= 0x0020u,
+	};
+
+	enum class HeaterConfig : uint16_t {
+		OFF = 0x2000u,
+		ON	= 0x0000u,
+	};
+
 protected:
 	I2C &i2c;
 
@@ -170,7 +173,7 @@ public:
 	 *
 	 * @return float The updated real temperature measurement.
 	 */
-	static float getTemperature(uint16_t temperatureRegister);
+	static float getTemperature(Register temperatureRegister);
 
 	/**
 	 * @brief Get the Temperature
@@ -188,7 +191,7 @@ public:
 	 *
 	 * @note In the event of hReg = 0x0000u, which might indicate a failure, this results in H = 0.0.
 	 */
-	static float getHumidity(uint16_t humidityRegister);
+	static float getHumidity(Register humidityRegister);
 
 	/**
 	 * @brief Get the Humidity
@@ -203,9 +206,9 @@ public:
 	/**
 	 * @brief Get the Device ID of the HDC1080.
 	 *
-	 * @return std::optional<I2C::Register> 0x1050 if successful.
+	 * @return std::optional<Register> 0x1050 if successful.
 	 */
-	inline std::optional<I2C::Register> getDeviceID() { return this->i2c.read(HDC1080_DEVICE_ID_ADDR); }
+	inline std::optional<Register> getDeviceID() { return this->i2c.read(HDC1080_DEVICE_ID_ADDR); }
 
 	/**
 	 * @brief Get the Manufacturer ID of the HDC1080.
@@ -214,23 +217,32 @@ public:
 	 */
 	inline std::optional<uint16_t> getManufacturerID() { return this->i2c.read(HDC1080_MANUFACTURER_ID_ADDR); }
 
-	// std::optional<uint64_t>		   getSerialID();
+	/**
+	 * @brief Get the Serial ID of the HDC1080.
+	 *
+	 * @return std::optional<uint64_t> The 41-bit serial ID if successful.
+	 *
+	 * @note The serial ID is a 41-bit number by the register map, but the HDC1080 datasheet states "40-bit".
+	 * 		 This driver will assume the register map is correct.
+	 * @note Unused bits are set to 0.
+	 */
+	std::optional<uint64_t> getSerialID();
 
-	// std::optional<bool> getBatteryStatus();	// TODO
+	// std::optional<bool> getBatteryStatus(); // TODO
 
 private:
 	/**
 	 * @brief Get the Temperature Register
 	 *
-	 * @return std::optional<I2C::Register> The fetched value of the temperature register if successful.
+	 * @return std::optional<Register> The fetched value of the temperature register if successful.
 	 */
-	std::optional<I2C::Register> getTemperatureRegister();
+	std::optional<Register> getTemperatureRegister();
 	/**
 	 * @brief Get the Humidity Register
 	 *
-	 * @return std::optional<I2C::Register> The fetched value of the humidity register if successful.
+	 * @return std::optional<Register> The fetched value of the humidity register if successful.
 	 */
-	std::optional<I2C::Register> getHumidityRegister();
+	std::optional<Register> getHumidityRegister();
 
 	/* 	TODO: Individual Device Setting Setter Methods
 	void setAcquisitionMode(AcqModeConfig acqMode);
@@ -250,14 +262,14 @@ private:
 	 * @note The heater should only be turned on if necessary for saturated conditions. Refer to the datasheet §8.3.3.
 	 * @note If only a single measurement is desired, the other measurement's resolution may be set to any valid value.
 	 */
-	std::optional<I2C::Register> setConfig(
+	std::optional<Register> setConfig(
 		AcqModeConfig			 acqMode, //
 		TempResolutionConfig	 tRes,
 		HumidityResolutionConfig hRes,
 		HeaterConfig			 heater
 	);
 
-	std::optional<I2C::Register> getMeasurementRegister(I2C::MemoryAddress memAddr, uint32_t waitTime = 0);
+	std::optional<Register> getMeasurementRegister(MemoryAddress memAddr, uint32_t waitTime = 0);
 
 /* Registration for Private Member Testing Purposes Only */
 #ifdef HDC1080_GTEST_TESTING

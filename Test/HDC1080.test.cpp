@@ -123,3 +123,20 @@ TEST_F(HDC1080_Test, getManufacturerIDReturnsEmptyOptionalWhenI2CReadFails) {
 	disableI2C();
 	EXPECT_EQ(this->hdc1080.getManufacturerID(), std::nullopt);
 }
+
+TEST_F(HDC1080_Test, getSerialIDNormallyReturnsValue) {
+	const MemoryAddress serialIDRegisters[] = {0xFBu, 0xFCu, 0xFDu};
+	const Register		serialIDValues[]	= {0xFFFFu, 0xFFFFu, 0xFF80u}; // 1 in every bit that 41-bit Serial ID has
+	// Note: In reality the serial ID can be any 41-bit value, but we're only testing that the bits are read correctly.
+
+	for (uint8_t i = 0; i < 3; i++) {
+		EXPECT_CALL(this->i2c, read(Eq(serialIDRegisters[i]))).WillOnce(Return(serialIDValues[i]));
+	}
+
+	EXPECT_EQ(this->hdc1080.getSerialID().value(), 0x1FFFFFFFFFFu);
+}
+
+TEST_F(HDC1080_Test, getSerialIDReturnsEmptyOptionalWhenI2CReadFails) {
+	disableI2C();
+	EXPECT_EQ(this->hdc1080.getSerialID(), std::nullopt);
+}

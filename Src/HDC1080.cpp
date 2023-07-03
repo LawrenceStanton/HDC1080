@@ -92,18 +92,21 @@ std::optional<Register> HDC1080::setConfig(
 	return this->i2c.write(HDC1080_CONFIG_ADDR, reg);
 }
 
-/**
- * @brief Fetches the Serial ID of the HDC1080.
- *
- * @return uint64_t The Serial ID (40bit value, right aligned).
- */
-// uint64_t HDC1080::getSerialID() {
-// 	etl::vector<Register, 3> serialID;
-// 	for (unsigned int i = 0; i < 3; i++) {
-// 		auto transmission = this->i2c.read(HDC1080_SERIAL_ID_ADDR + i);
-// 	}
-// 	serialID[i] = return (((uint64_t)serialID[0] << 24) | ((uint64_t)serialID[1] << 8) | ((uint64_t)serialID[2] >> 8));
-// }
+std::optional<uint64_t> HDC1080::getSerialID() {
+	Register serialID[3];
+	for (unsigned int i = 0; i < 3; i++) {
+		auto transmission = this->i2c.read(HDC1080_SERIAL_ID_ADDR + i);
+		if (transmission.has_value())
+			serialID[i] = transmission.value();
+		else
+			return std::nullopt;
+	}
+	const uint64_t serialIdValue = (((uint64_t)serialID[0] & 0xFFFF) << 25) // SERIAL_ID[40:25], register bits [15:0]
+								 | (((uint64_t)serialID[1] & 0xFFFF) << 9)	// SERIAL_ID[24:9], register bits [15:0]
+								 | (((uint64_t)serialID[2] & 0xFF80) >> 7); // SERIAL_ID[8:0], register bits [15:7]
+
+	return serialIdValue;
+}
 
 /**
  * @brief Special routine for fetching a memory register that enforces a required measurement conversion time.
