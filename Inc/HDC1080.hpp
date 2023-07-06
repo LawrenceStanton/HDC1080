@@ -141,7 +141,7 @@ public:
 	};
 
 protected:
-	I2C &i2c;
+	I2C *i2c;
 
 public:
 	/**
@@ -153,7 +153,7 @@ public:
 	 * @param heater	The heater setting (on or off).
 	 */
 	HDC1080(
-		I2C						&i2c,												   // I2C Driver
+		I2C						*i2c,												   // I2C Driver
 		AcqModeConfig			 acqMode = HDC1080::AcqModeConfig::DUAL,			   // Acquisition Mode
 		TempResolutionConfig	 tRes	 = HDC1080::TempResolutionConfig::A_14BIT,	   // Temperature Resolution
 		HumidityResolutionConfig hRes	 = HDC1080::HumidityResolutionConfig::A_14BIT, // Humidity Resolution
@@ -208,14 +208,14 @@ public:
 	 *
 	 * @return std::optional<Register> 0x1050 if successful.
 	 */
-	inline std::optional<Register> getDeviceID() { return this->i2c.read(HDC1080_DEVICE_ID_ADDR); }
+	inline std::optional<Register> getDeviceID() { return this->i2c->read(HDC1080_DEVICE_ID_ADDR); }
 
 	/**
 	 * @brief Get the Manufacturer ID of the HDC1080.
 	 *
 	 * @return std::optional<uint16_t> 0x5449 if successful.
 	 */
-	inline std::optional<uint16_t> getManufacturerID() { return this->i2c.read(HDC1080_MANUFACTURER_ID_ADDR); }
+	inline std::optional<uint16_t> getManufacturerID() { return this->i2c->read(HDC1080_MANUFACTURER_ID_ADDR); }
 
 	/**
 	 * @brief Get the Serial ID of the HDC1080.

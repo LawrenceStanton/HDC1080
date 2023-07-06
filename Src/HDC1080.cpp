@@ -34,7 +34,7 @@ using Register		= HDC1080::I2C::Register;
 using MemoryAddress = HDC1080::I2C::MemoryAddress;
 
 HDC1080::HDC1080(
-	HDC1080::I2C					 &i2c,
+	HDC1080::I2C					 *i2c,
 	HDC1080::AcqModeConfig			  acqMode,
 	HDC1080::TempResolutionConfig	  tRes,
 	HDC1080::HumidityResolutionConfig hRes,
@@ -89,13 +89,13 @@ std::optional<Register> HDC1080::setConfig(
 				 | static_cast<Register>(hRes)	  //
 				 | static_cast<Register>(heater);
 
-	return this->i2c.write(HDC1080_CONFIG_ADDR, reg);
+	return this->i2c->write(HDC1080_CONFIG_ADDR, reg);
 }
 
 std::optional<uint64_t> HDC1080::getSerialID() {
 	Register serialID[3];
 	for (unsigned int i = 0; i < 3; i++) {
-		auto transmission = this->i2c.read(HDC1080_SERIAL_ID_ADDR + i);
+		auto transmission = this->i2c->read(HDC1080_SERIAL_ID_ADDR + i);
 		if (transmission.has_value())
 			serialID[i] = transmission.value();
 		else
@@ -121,14 +121,14 @@ std::optional<uint64_t> HDC1080::getSerialID() {
  */
 std::optional<HDC1080::I2C::Register>
 HDC1080::getMeasurementRegister(HDC1080::I2C::MemoryAddress memAddr, uint32_t waitTime) {
-	if (!this->i2c.transmit(static_cast<uint8_t>(memAddr)))
+	if (!this->i2c->transmit(static_cast<uint8_t>(memAddr)))
 		return {};
 
-	this->i2c.delay(waitTime);
+	this->i2c->delay(waitTime);
 
 	std::optional<uint8_t> transmissionData[2];
 	for (auto &&data : transmissionData) {
-		data = this->i2c.receive();
+		data = this->i2c->receive();
 		if (!data)
 			return {};
 	}
