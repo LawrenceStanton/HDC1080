@@ -1,48 +1,38 @@
 project(HDC1080)
 
-set(EXECUTABLE ${PROJECT_NAME})
-
-set(EXTERNAL_LIBRARY_TARGETS
-	etl::etl
-)
-
-foreach(EXTERNAL_LIBRARY_TARGET ${EXTERNAL_LIBRARY_TARGETS})
-	if(NOT TARGET ${EXTERNAL_LIBRARY_TARGET})
-		message(FATAL_ERROR "External library target ${EXTERNAL_LIBRARY_TARGET} not found. Please add it to the project.")
-	endif()
-endforeach()
+set(LIBRARY ${PROJECT_NAME})
 
 enable_language(CXX)
 
-add_library(${EXECUTABLE} STATIC
+add_library(${LIBRARY} STATIC
 	Src/HDC1080.cpp
 )
 
-target_include_directories(${EXECUTABLE} PUBLIC
+target_include_directories(${LIBRARY} PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}/Inc
 )
 
-target_link_libraries(${EXECUTABLE} PUBLIC
+target_link_libraries(${LIBRARY} PUBLIC
 	${EXTERNAL_LIBRARY_TARGETS}
 )
 
-add_library(${PROJECT_NAME}::${EXECUTABLE} ALIAS ${EXECUTABLE})
+add_library(${PROJECT_NAME}::${LIBRARY} ALIAS ${LIBRARY})
 
 if(NOT CMAKE_CROSSCOMPILING)
 	option(HDC1080_CODE_COVERAGE "Enable code coverage for HDC1080" OFF)
 
-	set(TEST_EXECUTABLE ${EXECUTABLE}_Test)
+	set(TEST_EXECUTABLE ${LIBRARY}_Test)
 
 	# Add addittional configuration to library target.
-	target_link_libraries(${EXECUTABLE} PRIVATE
+	target_link_libraries(${LIBRARY} PRIVATE
 		GTest::gtest
 	)
 
-	target_compile_options(${EXECUTABLE} PRIVATE
+	target_compile_options(${LIBRARY} PRIVATE
 		$<$<BOOL:${HDC1080_CODE_COVERAGE}>:--coverage>
 	)
 
-	target_link_options(${EXECUTABLE} PRIVATE
+	target_link_options(${LIBRARY} PRIVATE
 		$<$<BOOL:${HDC1080_CODE_COVERAGE}>:--coverage>
 	)
 
