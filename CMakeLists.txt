@@ -89,7 +89,7 @@ if(NOT CMAKE_CROSSCOMPILING)
 	if(HDC1080_CODE_COVERAGE)
 		option(HDC1080_CODE_COVERAGE_EXCLUDE "Enable code coverage for HDC1080" ON)
 
-		set(GCOVR_COMMAND gcovr --root ${CMAKE_SOURCE_DIR} --exclude .clang-format --gcov-executable gcov-13 --filter '.*HDC1080/*')
+		set(GCOVR_COMMAND gcovr --root ${CMAKE_SOURCE_DIR} --exclude .clang-format --gcov-executable gcov-13 --filter '.*HDC1080/*' --exclude '.*\.test\..*')
 		set(SILENT_RUN_COMMAND ./${TEST_EXECUTABLE} > /dev/null)
 
 		add_custom_command(TARGET ${TEST_EXECUTABLE} POST_BUILD
