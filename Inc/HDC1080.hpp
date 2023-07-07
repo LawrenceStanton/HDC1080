@@ -21,7 +21,7 @@
 #include <optional>
 
 #ifdef HDC1080_GTEST_TESTING
-#include "gtest/gtest.h"
+	#include "gtest/gtest.h"
 #endif
 
 #define HDC1080_I2C_ADDR 0x40u
@@ -121,23 +121,23 @@ public:
 
 	enum class AcqModeConfig : uint16_t {
 		SINGLE = 0x0000u,
-		DUAL   = 0x0100u,
+		DUAL   = 0x1000u, // Temperature is measured first, then humidity.
 	};
 
 	enum class TempResolutionConfig : uint16_t {
 		A_14BIT = 0x0000u,
-		A_11BIT = 0x0040u,
+		A_11BIT = 0x0400u,
 	};
 
 	enum class HumidityResolutionConfig : uint16_t {
 		A_14BIT = 0x0000u,
-		A_11BIT = 0x0010u,
-		A_8BIT	= 0x0020u,
+		A_11BIT = 0x0100u,
+		A_8BIT	= 0x0200u,
 	};
 
 	enum class HeaterConfig : uint16_t {
-		OFF = 0x2000u,
-		ON	= 0x0000u,
+		OFF = 0x0000u,
+		ON	= 0x2000u,
 	};
 
 protected:
@@ -152,13 +152,7 @@ public:
 	 * @param hRes		The resolution of the humidity measurement (8, 11, or 14 bit).
 	 * @param heater	The heater setting (on or off).
 	 */
-	HDC1080(
-		I2C						*i2c,												   // I2C Driver
-		AcqModeConfig			 acqMode = HDC1080::AcqModeConfig::DUAL,			   // Acquisition Mode
-		TempResolutionConfig	 tRes	 = HDC1080::TempResolutionConfig::A_14BIT,	   // Temperature Resolution
-		HumidityResolutionConfig hRes	 = HDC1080::HumidityResolutionConfig::A_14BIT, // Humidity Resolution
-		HeaterConfig			 heater	 = HDC1080::HeaterConfig::OFF				   // Heater On/Off
-	);
+	HDC1080(I2C *i2c);
 
 	// inline ~HDC1080() { softReset(); }
 
@@ -230,27 +224,6 @@ public:
 
 	// std::optional<bool> getBatteryStatus(); // TODO
 
-private:
-	/**
-	 * @brief Get the Temperature Register
-	 *
-	 * @return std::optional<Register> The fetched value of the temperature register if successful.
-	 */
-	std::optional<Register> getTemperatureRegister();
-	/**
-	 * @brief Get the Humidity Register
-	 *
-	 * @return std::optional<Register> The fetched value of the humidity register if successful.
-	 */
-	std::optional<Register> getHumidityRegister();
-
-	/* 	TODO: Individual Device Setting Setter Methods
-	void setAcquisitionMode(AcqModeConfig acqMode);
-	void setTemperatureResolution(TempResolutionConfig tRes);
-	void setHumidityResolution(HumidityResolutionConfig hRes);
-	void setHeater(HeaterConfig heater);
-	*/
-
 	/**
 	 * @brief Sets the HDC1080 Configuration Register given all programmable settings.
 	 *
@@ -269,11 +242,49 @@ private:
 		HeaterConfig			 heater
 	);
 
+	/**
+	 * @brief Set the Acquisition Mode of the HDC1080.
+	 *
+	 * @param acqMode The Mode of Acquisition (single or dual measurements).
+	 * @return std::optional<Register> The written value of the configuration register if successful.
+	 */
+	// std::optional<Register> setAcquisitionMode(AcqModeConfig acqMode);
+
+	/* 	TODO: Individual Device Setting Setter Methods
+	void setTemperatureResolution(TempResolutionConfig tRes);
+	void setHumidityResolution(HumidityResolutionConfig hRes);
+	void setHeater(HeaterConfig heater);
+	*/
+
+private:
+	/**
+	 * @brief Get the Temperature Register
+	 *
+	 * @return std::optional<Register> The fetched value of the temperature register if successful.
+	 */
+	std::optional<Register> getTemperatureRegister();
+
+	/**
+	 * @brief Get the Humidity Register
+	 *
+	 * @return std::optional<Register> The fetched value of the humidity register if successful.
+	 */
+	std::optional<Register> getHumidityRegister();
+
+	/**
+	 * @brief Get a Measurement Register from the HDC1080.
+	 *
+	 * @param memAddr The memory address of the register to fetch.
+	 * @param waitTime The measurement conversion delay time in milliseconds.
+	 * @return std::optional<Register> The fetched value of the measurement register if successful.
+	 */
 	std::optional<Register> getMeasurementRegister(MemoryAddress memAddr, uint32_t waitTime = 0);
 
 /* Registration for Private Member Testing Purposes Only */
 #ifdef HDC1080_GTEST_TESTING
 	friend class HDC1080_Test;
+
+	FRIEND_TEST(HDC1080_Test, constructorAssignsI2cInterfacePointer);
 
 	FRIEND_TEST(HDC1080_Test, getTemperatureRegisterNormallyReturnsValue);
 	FRIEND_TEST(HDC1080_Test, getTemperatureRegisterReturnsEmptyOptionalWhenI2CFails);
