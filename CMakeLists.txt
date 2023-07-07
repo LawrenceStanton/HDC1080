@@ -4,6 +4,9 @@ set(LIBRARY ${PROJECT_NAME})
 
 enable_language(CXX)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON) # Requires std::optional in C++17
+
 add_library(${LIBRARY} STATIC
 	Src/HDC1080.cpp
 )
@@ -19,7 +22,26 @@ target_link_libraries(${LIBRARY} PUBLIC
 add_library(${PROJECT_NAME}::${LIBRARY} ALIAS ${LIBRARY})
 
 if(NOT CMAKE_CROSSCOMPILING)
-	option(HDC1080_CODE_COVERAGE "Enable code coverage for HDC1080" OFF)
+	option(HDC1080_CODE_COVERAGE "Enable code coverage for HDC1080" ON)
+	option(HDC1080_AUTOFETCH_GTEST "Automatically fetch GTest if not included by parent." ON)
+
+	if(HDC1080_AUTOFETCH_GTEST)
+			cmake_minimum_required(VERSION 3.14)
+
+			if(NOT TARGET GTest::gtest OR NOT TARGET GTest::gmock)
+				message(STATUS "GTest not found. Fetching...")
+			include(FetchContent)
+			FetchContent_Declare(
+				googletest
+				GIT_REPOSITORY https://github.com/google/googletest
+				GIT_TAG origin/main
+			)
+			set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+			FetchContent_MakeAvailable(googletest)
+
+			enable_testing()
+		endif()
+	endif()
 
 	set(TEST_EXECUTABLE ${LIBRARY}_Test)
 
@@ -50,7 +72,7 @@ if(NOT CMAKE_CROSSCOMPILING)
 	)
 
 	target_link_libraries(${TEST_EXECUTABLE} PRIVATE
-		${PROJECT_NAME}::${EXECUTABLE}
+		${PROJECT_NAME}::${LIBRARY}
 		GTest::gtest_main
 		GTest::gmock
 	)
