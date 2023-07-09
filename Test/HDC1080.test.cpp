@@ -240,7 +240,7 @@ TEST_F(HDC1080_Test, setConfigReturnsEmptyOptionalWhenGivenNoArguments) {
 	EXPECT_EQ(this->hdc1080.setConfig({}, {}, {}, {}), std::nullopt);
 }
 
-TEST_F(HDC1080_Test, setConfigReadsCurrentConfigAndWritesBackNewValues) {
+TEST_F(HDC1080_Test, setConfigNormallyReadsCurrentConfigAndWritesBackNewValues) {
 	const MemoryAddress configRegister			   = 0x02u;
 	const Register		configInitialValue		   = 0x1100u; // Humidity 11-bit
 	const Register		configExpectedWrittenValue = 0b0000'0101'0000'0000u;
@@ -255,6 +255,22 @@ TEST_F(HDC1080_Test, setConfigReadsCurrentConfigAndWritesBackNewValues) {
 		{}
 	);
 	EXPECT_EQ(write.value(), configExpectedWrittenValue);
+}
+
+TEST_F(HDC1080_Test, setConfigShortCircuitsWhenConfigUnchangedAndReturnsCurrentConfigRegisterValue) {
+	const MemoryAddress configRegister	   = 0x02u;
+	const Register		configInitialValue = 0x3500u; // Humidity 11-bit, Temperature 11-bit, Heater ON
+
+	EXPECT_CALL(this->i2c, read(Eq(configRegister))).WillOnce(Return(configInitialValue));
+	EXPECT_CALL(this->i2c, write).Times(0); // Check that function short circuits without writing.
+
+	auto write = this->hdc1080.setConfig(
+		{}, //
+		HDC1080::TemperatureResolution::A_11BIT,
+		HDC1080::HumidityResolution::A_11BIT,
+		HDC1080::Heater::ON
+	);
+	EXPECT_EQ(write.value(), configInitialValue);
 }
 
 TEST_F(HDC1080_Test, setConfigReturnsEmptyOptionalWhenI2CWriteFails) {

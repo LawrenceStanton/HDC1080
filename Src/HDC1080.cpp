@@ -169,6 +169,9 @@ std::optional<Register> HDC1080::setConfig(
 		if (heater) config.heater = heater.value();
 
 		auto newConfigRegister = constructConfigRegister(config);
+
+		if (newConfigRegister == currentConfigRegister.value()) return newConfigRegister;
+
 		return this->i2c->write(HDC1080_CONFIG_ADDR, newConfigRegister);
 	}
 }
