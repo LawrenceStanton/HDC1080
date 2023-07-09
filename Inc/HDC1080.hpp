@@ -27,7 +27,7 @@
 #define HDC1080_I2C_ADDR 0x40u
 #define HDC1080_MEM_SIZE 2u
 
-/* uint16_t Addresses */
+/* Register Addresses */
 #define HDC1080_TEMPERATURE_ADDR	 0x00u
 #define HDC1080_HUMIDITY_ADDR		 0x01u
 #define HDC1080_CONFIG_ADDR			 0x02u
@@ -35,7 +35,7 @@
 #define HDC1080_MANUFACTURER_ID_ADDR 0xFEu
 #define HDC1080_DEVICE_ID_ADDR		 0xFFu
 
-/* uint16_t Address Sizes (in bytes) */
+/* Register Address Sizes (in bytes) */
 #define HDC1080_TEMPERATURE_ADDR_SIZE	  2u
 #define HDC1080_HUMIDITY_ADDR_SIZE		  2u
 #define HDC1080_CONFIG_ADDR_SIZE		  2u
@@ -44,13 +44,20 @@
 #define HDC1080_DEVICE_ID_ADDR_SIZE		  2u
 
 /* Power-on Reset Values */
+// PORV = Power-On Reset Value
 #define HDC1080_TEMPERATURE_ADDR_PORV	  0x0000u
 #define HDC1080_HUMIDITY_ADDR_PORV		  0x0000u
 #define HDC1080_CONFIG_ADDR_PORV		  0x1000u
 #define HDC1080_MANUFACTURER_ID_ADDR_PORV 0x5449u
 #define HDC1080_DEVICE_ID_ADDR_PORV		  0x1050u
 
-#define HDC1080_CONFIG_RESET 0x8000u
+/* Configuration Register Bit Masks */
+#define HDC1080_CONFIG_RESET_MASK				   0x8000u
+#define HDC1080_CONFIG_HEATER_MASK				   0x2000u
+#define HDC1080_CONFIG_ACQUISITION_MODE_MASK	   0x1000u
+#define HDC1080_CONFIG_BATTERY_STATUS_MASK		   0x0800u
+#define HDC1080_CONFIG_TEMPERATURE_RESOLUTION_MASK 0x0400u
+#define HDC1080_CONFIG_HUMIDITY_RESOLUTION_MASK	   0x0300u
 
 class HDC1080 {
 public:
@@ -119,25 +126,26 @@ public:
 	using MemoryAddress = I2C::MemoryAddress;
 	using Register		= I2C::Register;
 
-	enum class AcqModeConfig : uint16_t {
+	// Configuration Register Enumerations
+	enum class AcquisitionMode : Register {
 		SINGLE = 0x0000u,
 		DUAL   = 0x1000u, // Temperature is measured first, then humidity.
 	};
 
-	enum class TempResolutionConfig : uint16_t {
+	enum class TemperatureResolution : Register {
 		A_14BIT = 0x0000u,
 		A_11BIT = 0x0400u,
 	};
 
-	enum class HumidityResolutionConfig : uint16_t {
+	enum class HumidityResolution : Register {
 		A_14BIT = 0x0000u,
 		A_11BIT = 0x0100u,
 		A_8BIT	= 0x0200u,
 	};
 
-	enum class HeaterConfig : uint16_t {
-		OFF = 0x0000u,
+	enum class Heater : Register {
 		ON	= 0x2000u,
+		OFF = 0x0000u,
 	};
 
 protected:
@@ -234,12 +242,15 @@ public:
 	 *
 	 * @note The heater should only be turned on if necessary for saturated conditions. Refer to the datasheet §8.3.3.
 	 * @note If only a single measurement is desired, the other measurement's resolution may be set to any valid value.
+	 * @note All arguments are optional. Unspecified arguments will remain unchanged. If all arguments are specified,
+	 *    	 the config register is not read before being written.
+	 * @note If no arguments are specified the function short circuits and returns an empty optional.
 	 */
 	std::optional<Register> setConfig(
-		AcqModeConfig			 acqMode, //
-		TempResolutionConfig	 tRes,
-		HumidityResolutionConfig hRes,
-		HeaterConfig			 heater
+		std::optional<AcquisitionMode>		 acqMode, //
+		std::optional<TemperatureResolution> tRes,
+		std::optional<HumidityResolution>	 hRes,
+		std::optional<Heater>				 heater
 	);
 
 	/**
@@ -248,12 +259,12 @@ public:
 	 * @param acqMode The Mode of Acquisition (single or dual measurements).
 	 * @return std::optional<Register> The written value of the configuration register if successful.
 	 */
-	// std::optional<Register> setAcquisitionMode(AcqModeConfig acqMode);
+	// std::optional<Register> setAcquisitionMode(AcquisitionMode acqMode);
 
 	/* 	TODO: Individual Device Setting Setter Methods
-	void setTemperatureResolution(TempResolutionConfig tRes);
-	void setHumidityResolution(HumidityResolutionConfig hRes);
-	void setHeater(HeaterConfig heater);
+	void setTemperatureResolution(TemperatureResolution tRes);
+	void setHumidityResolution(HumidityResolution hRes);
+	void setHeater(Heater heater);
 	*/
 
 private:

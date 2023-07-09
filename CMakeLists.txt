@@ -4,8 +4,8 @@ set(LIBRARY ${PROJECT_NAME})
 
 enable_language(CXX)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON) # Requires std::optional in C++17
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON) # Requires std::optional in C++17, default comparisons in C++20.
 
 add_library(${LIBRARY} STATIC
 	Src/HDC1080.cpp

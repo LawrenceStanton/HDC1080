@@ -41,6 +41,18 @@ inline static Register clearBits(Register reg, Register bits) {
 	return (reg & ~bits);
 }
 
+/**
+ * @brief Writes the given bits to the given register, masking the bits to be written with the given mask.
+ *
+ * @param reg The register to write to.
+ * @param bits The bits to write to the register.
+ * @param mask The mask to apply to the bits to be written.
+ * @return Register
+ */
+inline static Register writeBits(Register reg, Register bits, Register mask) {
+	return (reg & ~mask) | (bits & mask);
+}
+
 HDC1080::HDC1080(HDC1080::I2C *i2c) : i2c(i2c) {}
 
 float HDC1080::getTemperature(Register temperatureRegister) {
@@ -104,34 +116,59 @@ HDC1080::getMeasurementRegister(HDC1080::I2C::MemoryAddress memAddr, uint32_t wa
 	return static_cast<HDC1080::I2C::Register>(transmissionData[0].value() << 8 | transmissionData[1].value());
 }
 
-static Register constructConfigRegister(
-	HDC1080::AcqModeConfig			  acqMode,
-	HDC1080::TempResolutionConfig	  tRes,
-	HDC1080::HumidityResolutionConfig hRes,
-	HDC1080::HeaterConfig			  heater
-) {
-	return static_cast<Register>(acqMode) //
-		 | static_cast<Register>(tRes)	  //
-		 | static_cast<Register>(hRes)	  //
-		 | static_cast<Register>(heater);
+struct Config {
+	HDC1080::AcquisitionMode	   acqMode;
+	HDC1080::TemperatureResolution tRes;
+	HDC1080::HumidityResolution	   hRes;
+	HDC1080::Heater				   heater;
+
+#ifdef HDC1080_GTEST_TESTING
+	bool operator==(const Config &other) const = default;
+#endif
+};
+
+static Register constructConfigRegister(Config config) {
+	return static_cast<Register>(config.acqMode) //
+		 | static_cast<Register>(config.tRes)	 //
+		 | static_cast<Register>(config.hRes)	 //
+		 | static_cast<Register>(config.heater);
+}
+
+static Config decodeConfigRegister(Register configRegister) {
+	return Config{
+		static_cast<HDC1080::AcquisitionMode>(configRegister & HDC1080_CONFIG_ACQUISITION_MODE_MASK),
+		static_cast<HDC1080::TemperatureResolution>(configRegister & HDC1080_CONFIG_TEMPERATURE_RESOLUTION_MASK),
+		static_cast<HDC1080::HumidityResolution>(configRegister & HDC1080_CONFIG_HUMIDITY_RESOLUTION_MASK),
+		static_cast<HDC1080::Heater>(configRegister & HDC1080_CONFIG_HEATER_MASK)};
 }
 
 std::optional<Register> HDC1080::setConfig(
-	AcqModeConfig			 acqMode,
-	TempResolutionConfig	 tRes,
-	HumidityResolutionConfig hRes,
-	HeaterConfig			 heater
+	std::optional<AcquisitionMode>		 acqMode,
+	std::optional<TemperatureResolution> tRes,
+	std::optional<HumidityResolution>	 hRes,
+	std::optional<Heater>				 heater
 ) {
-	Register reg = constructConfigRegister(acqMode, tRes, hRes, heater);
+	if (!acqMode && !tRes && !hRes && !heater) return {};
 
-	return this->i2c->write(HDC1080_CONFIG_ADDR, reg);
+	// Check for all options being supplied
+	if (acqMode && tRes && hRes && heater) {
+		Config config{acqMode.value(), tRes.value(), hRes.value(), heater.value()};
+
+		auto newConfigRegister = constructConfigRegister(config);
+		return this->i2c->write(HDC1080_CONFIG_ADDR, newConfigRegister);
+	} else {
+		auto currentConfigRegister = this->i2c->read(HDC1080_CONFIG_ADDR);
+
+		if (!currentConfigRegister) return {};
+
+		auto config = decodeConfigRegister(currentConfigRegister.value());
+
+		if (acqMode) config.acqMode = acqMode.value();
+		if (tRes) config.tRes = tRes.value();
+		if (hRes) config.hRes = hRes.value();
+		if (heater) config.heater = heater.value();
+
+		auto newConfigRegister = constructConfigRegister(config);
+		return this->i2c->write(HDC1080_CONFIG_ADDR, newConfigRegister);
+	}
 }
-
-// std::optional<Register> HDC1080::setAcquisitionMode(AcqModeConfig acqMode) {
-// 	auto configRegister = this->i2c->read(HDC1080_CONFIG_ADDR);
-
-// 	if (!configRegister.has_value()) return {};
-
-// 	auto newConfigRegister = setBits(configRegister.value(), static_cast<Register>(acqMode));
-// 	return this->i2c->write(HDC1080_CONFIG_ADDR, newConfigRegister);
-// }

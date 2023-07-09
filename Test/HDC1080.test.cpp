@@ -32,31 +32,55 @@ TEST(HDC1080_TestStatic, getHumidityStaticImplementsExpectedEquation) {
 
 TEST(HDC1080_TestStatic, constructConfigRegisterRandomChecks) {
 	EXPECT_EQ(
-		constructConfigRegister(
-			HDC1080::AcqModeConfig::DUAL,
-			HDC1080::TempResolutionConfig::A_11BIT,
-			HDC1080::HumidityResolutionConfig::A_11BIT,
-			HDC1080::HeaterConfig::ON
-		),
+		constructConfigRegister(Config{
+			HDC1080::AcquisitionMode::DUAL,
+			HDC1080::TemperatureResolution::A_11BIT,
+			HDC1080::HumidityResolution::A_11BIT,
+			HDC1080::Heater::ON}),
 		0b0011'0101'0000'0000u
 	);
 	EXPECT_EQ(
-		constructConfigRegister(
-			HDC1080::AcqModeConfig::SINGLE,
-			HDC1080::TempResolutionConfig::A_14BIT,
-			HDC1080::HumidityResolutionConfig::A_14BIT,
-			HDC1080::HeaterConfig::OFF
-		),
+		constructConfigRegister(Config{
+			HDC1080::AcquisitionMode::SINGLE,
+			HDC1080::TemperatureResolution::A_14BIT,
+			HDC1080::HumidityResolution::A_14BIT,
+			HDC1080::Heater::OFF}),
 		0b0000'0000'0000'0000u
 	);
 	EXPECT_EQ(
-		constructConfigRegister(
-			HDC1080::AcqModeConfig::SINGLE,
-			HDC1080::TempResolutionConfig::A_14BIT,
-			HDC1080::HumidityResolutionConfig::A_8BIT,
-			HDC1080::HeaterConfig::ON
-		),
+		constructConfigRegister(Config{
+			HDC1080::AcquisitionMode::SINGLE,
+			HDC1080::TemperatureResolution::A_14BIT,
+			HDC1080::HumidityResolution::A_8BIT,
+			HDC1080::Heater::ON}),
 		0b0010'0010'0000'0000u
+	);
+}
+
+TEST(HDC1080_TestStatic, decodeConfigRegisterRandomChecks) {
+	EXPECT_EQ(
+		decodeConfigRegister(0b0011'0101'0000'0000u),
+		(Config{
+			HDC1080::AcquisitionMode::DUAL,
+			HDC1080::TemperatureResolution::A_11BIT,
+			HDC1080::HumidityResolution::A_11BIT,
+			HDC1080::Heater::ON})
+	);
+	EXPECT_EQ(
+		decodeConfigRegister(0b0000'0000'0000'0000u),
+		(Config{
+			HDC1080::AcquisitionMode::SINGLE,
+			HDC1080::TemperatureResolution::A_14BIT,
+			HDC1080::HumidityResolution::A_14BIT,
+			HDC1080::Heater::OFF})
+	);
+	EXPECT_EQ(
+		decodeConfigRegister(0b0010'0010'0000'0000u),
+		(Config{
+			HDC1080::AcquisitionMode::SINGLE,
+			HDC1080::TemperatureResolution::A_14BIT,
+			HDC1080::HumidityResolution::A_8BIT,
+			HDC1080::Heater::ON})
 	);
 }
 
@@ -193,7 +217,7 @@ TEST_F(HDC1080_Test, getSerialIDReturnsEmptyOptionalWhenI2CReadFails) {
 	EXPECT_EQ(this->hdc1080.getSerialID(), std::nullopt);
 }
 
-TEST_F(HDC1080_Test, setConfigNormallyWritesValue) {
+TEST_F(HDC1080_Test, setConfigNormallyWritesValueWithoutReadingIfGivenAllArguments) {
 	// Note: Constructing the register value to write is tested in the constructConfigRegisterRandomChecks test.
 
 	const MemoryAddress configRegister			   = 0x02u;
@@ -204,10 +228,31 @@ TEST_F(HDC1080_Test, setConfigNormallyWritesValue) {
 	EXPECT_CALL(this->i2c, write(Eq(configRegister), _)).Times(1);
 
 	auto write = this->hdc1080.setConfig(
-		HDC1080::AcqModeConfig::DUAL,
-		HDC1080::TempResolutionConfig::A_11BIT,
-		HDC1080::HumidityResolutionConfig::A_11BIT,
-		HDC1080::HeaterConfig::ON
+		HDC1080::AcquisitionMode::DUAL,
+		HDC1080::TemperatureResolution::A_11BIT,
+		HDC1080::HumidityResolution::A_11BIT,
+		HDC1080::Heater::ON
+	);
+	EXPECT_EQ(write.value(), configExpectedWrittenValue);
+}
+
+TEST_F(HDC1080_Test, setConfigReturnsEmptyOptionalWhenGivenNoArguments) {
+	EXPECT_EQ(this->hdc1080.setConfig({}, {}, {}, {}), std::nullopt);
+}
+
+TEST_F(HDC1080_Test, setConfigReadsCurrentConfigAndWritesBackNewValues) {
+	const MemoryAddress configRegister			   = 0x02u;
+	const Register		configInitialValue		   = 0x1100u; // Humidity 11-bit
+	const Register		configExpectedWrittenValue = 0b0000'0101'0000'0000u;
+
+	EXPECT_CALL(this->i2c, read(Eq(configRegister))).WillOnce(Return(configInitialValue));
+	EXPECT_CALL(this->i2c, write(Eq(configRegister), _)).Times(1);
+
+	auto write = this->hdc1080.setConfig(
+		{}, //
+		HDC1080::TemperatureResolution::A_11BIT,
+		{},
+		{}
 	);
 	EXPECT_EQ(write.value(), configExpectedWrittenValue);
 }
@@ -217,10 +262,10 @@ TEST_F(HDC1080_Test, setConfigReturnsEmptyOptionalWhenI2CWriteFails) {
 
 	EXPECT_EQ(
 		this->hdc1080.setConfig(
-			HDC1080::AcqModeConfig::DUAL,
-			HDC1080::TempResolutionConfig::A_11BIT,
-			HDC1080::HumidityResolutionConfig::A_11BIT,
-			HDC1080::HeaterConfig::OFF
+			HDC1080::AcquisitionMode::DUAL,
+			HDC1080::TemperatureResolution::A_11BIT,
+			HDC1080::HumidityResolution::A_11BIT,
+			HDC1080::Heater::OFF
 		),
 		std::nullopt
 	);
