@@ -270,3 +270,105 @@ TEST_F(HDC1080_Test, setConfigReturnsEmptyOptionalWhenI2CWriteFails) {
 		std::nullopt
 	);
 }
+
+TEST_F(HDC1080_Test, setAcquisitionModeNormallySetsValue) {
+	// Mock changing the config value to SINGLE mode and then back to DUAL mode.
+	const Register configInitialValueDualAcquisitionMode   = 0x1000u;
+	const Register configInitialValueSingleAcquisitionMode = 0x0000u;
+
+	EXPECT_CALL(this->i2c, read)
+		.WillOnce(Return(configInitialValueDualAcquisitionMode))
+		.WillOnce(Return(configInitialValueSingleAcquisitionMode));
+	EXPECT_CALL(this->i2c, write).WillRepeatedly(ReturnArg<1>());
+
+	EXPECT_EQ(
+		this->hdc1080.setAcquisitionMode(HDC1080::AcquisitionMode::SINGLE).value(),
+		configInitialValueSingleAcquisitionMode
+	);
+
+	EXPECT_EQ(
+		this->hdc1080.setAcquisitionMode(HDC1080::AcquisitionMode::DUAL).value(),
+		configInitialValueDualAcquisitionMode
+	);
+}
+
+TEST_F(HDC1080_Test, setAcquisitionModeReturnsEmptyOptionalWhenI2CWriteFails) {
+	disableI2C();
+	EXPECT_EQ(this->hdc1080.setAcquisitionMode(HDC1080::AcquisitionMode::DUAL), std::nullopt);
+}
+
+TEST_F(HDC1080_Test, setTemperatureResolutionNormallySetsValue) {
+	// Mock changing the config value to 14-bit resolution and then back to 11-bit resolution.
+	const Register configInitialValue14BitResolution = 0x1000u;
+	const Register configInitialValue11BitResolution = 0x1400u;
+
+	EXPECT_CALL(this->i2c, read)
+		.WillOnce(Return(configInitialValue11BitResolution))
+		.WillOnce(Return(configInitialValue14BitResolution));
+	EXPECT_CALL(this->i2c, write).WillRepeatedly(ReturnArg<1>());
+
+	EXPECT_EQ(
+		this->hdc1080.setTemperatureResolution(HDC1080::TemperatureResolution::A_11BIT).value(),
+		configInitialValue11BitResolution
+	);
+
+	EXPECT_EQ(
+		this->hdc1080.setTemperatureResolution(HDC1080::TemperatureResolution::A_14BIT).value(),
+		configInitialValue14BitResolution
+	);
+}
+
+TEST_F(HDC1080_Test, setTemperatureResolutionReturnsEmptyOptionalWhenI2CWriteFails) {
+	disableI2C();
+	EXPECT_EQ(this->hdc1080.setTemperatureResolution(HDC1080::TemperatureResolution::A_11BIT), std::nullopt);
+}
+
+TEST_F(HDC1080_Test, setHumidityResolutionNormallySetsValue) {
+	// Mock changing the config value to 11-bit resolution, then 8-bit resolution, then 14-bit resolution.
+	const Register configInitialValue14BitResolution = 0x1000u;
+	const Register configInitialValue11BitResolution = 0x1100u;
+	const Register configInitialValue8BitResolution	 = 0x1200u;
+
+	EXPECT_CALL(this->i2c, read)
+		.WillOnce(Return(configInitialValue11BitResolution))
+		.WillOnce(Return(configInitialValue8BitResolution))
+		.WillOnce(Return(configInitialValue14BitResolution));
+	EXPECT_CALL(this->i2c, write).WillRepeatedly(ReturnArg<1>());
+
+	EXPECT_EQ(
+		this->hdc1080.setHumidityResolution(HDC1080::HumidityResolution::A_11BIT).value(),
+		configInitialValue11BitResolution
+	);
+	EXPECT_EQ(
+		this->hdc1080.setHumidityResolution(HDC1080::HumidityResolution::A_8BIT).value(),
+		configInitialValue8BitResolution
+	);
+	EXPECT_EQ(
+		this->hdc1080.setHumidityResolution(HDC1080::HumidityResolution::A_14BIT).value(),
+		configInitialValue14BitResolution
+	);
+}
+
+TEST_F(HDC1080_Test, setHumidityResolutionReturnsEmptyOptionalWhenI2CWriteFails) {
+	disableI2C();
+	EXPECT_EQ(this->hdc1080.setHumidityResolution(HDC1080::HumidityResolution::A_11BIT), std::nullopt);
+}
+
+TEST_F(HDC1080_Test, setHeaterNormallySetsValue) {
+	// Mock changing the config value to ON mode and then back to OFF mode.
+	const Register configInitialValueHeaterOn  = 0x3000u;
+	const Register configInitialValueHeaterOff = 0x1000u;
+
+	EXPECT_CALL(this->i2c, read)
+		.WillOnce(Return(configInitialValueHeaterOn))
+		.WillOnce(Return(configInitialValueHeaterOff));
+	EXPECT_CALL(this->i2c, write).WillRepeatedly(ReturnArg<1>());
+
+	EXPECT_EQ(this->hdc1080.setHeater(HDC1080::Heater::ON).value(), configInitialValueHeaterOn);
+	EXPECT_EQ(this->hdc1080.setHeater(HDC1080::Heater::OFF).value(), configInitialValueHeaterOff);
+}
+
+TEST_F(HDC1080_Test, setHeaterReturnsEmptyOptionalWhenI2CWriteFails) {
+	disableI2C();
+	EXPECT_EQ(this->hdc1080.setHeater(HDC1080::Heater::ON), std::nullopt);
+}

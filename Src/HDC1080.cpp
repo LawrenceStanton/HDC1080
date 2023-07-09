@@ -172,3 +172,19 @@ std::optional<Register> HDC1080::setConfig(
 		return this->i2c->write(HDC1080_CONFIG_ADDR, newConfigRegister);
 	}
 }
+
+std::optional<Register> HDC1080::setAcquisitionMode(AcquisitionMode acqMode) {
+	return setConfig(acqMode, std::nullopt, std::nullopt, std::nullopt);
+}
+
+std::optional<Register> HDC1080::setTemperatureResolution(TemperatureResolution tRes) {
+	return setConfig(std::nullopt, tRes, std::nullopt, std::nullopt);
+}
+
+std::optional<Register> HDC1080::setHumidityResolution(HumidityResolution hRes) {
+	return setConfig(std::nullopt, std::nullopt, hRes, std::nullopt);
+}
+
+std::optional<Register> HDC1080::setHeater(Heater heater) {
+	return setConfig(std::nullopt, std::nullopt, std::nullopt, heater);
+}

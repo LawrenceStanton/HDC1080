@@ -254,18 +254,15 @@ public:
 	);
 
 	/**
-	 * @brief Set the Acquisition Mode of the HDC1080.
+	 * @brief Single Configuration Register Set Methods.
 	 *
-	 * @param acqMode The Mode of Acquisition (single or dual measurements).
+	 * @param configParam The desired configuration parameter to set.
 	 * @return std::optional<Register> The written value of the configuration register if successful.
 	 */
-	// std::optional<Register> setAcquisitionMode(AcquisitionMode acqMode);
-
-	/* 	TODO: Individual Device Setting Setter Methods
-	void setTemperatureResolution(TemperatureResolution tRes);
-	void setHumidityResolution(HumidityResolution hRes);
-	void setHeater(Heater heater);
-	*/
+	std::optional<Register> setAcquisitionMode(AcquisitionMode acqMode);
+	std::optional<Register> setTemperatureResolution(TemperatureResolution tRes);
+	std::optional<Register> setHumidityResolution(HumidityResolution hRes);
+	std::optional<Register> setHeater(Heater heater);
 
 private:
 	/**
