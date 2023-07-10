@@ -22,7 +22,7 @@ target_link_libraries(${LIBRARY} PUBLIC
 add_library(${PROJECT_NAME}::${LIBRARY} ALIAS ${LIBRARY})
 
 if(NOT CMAKE_CROSSCOMPILING)
-	option(HDC1080_CODE_COVERAGE "Enable code coverage for HDC1080" ON)
+	option(HDC1080_CODE_COVERAGE "Enable code coverage for HDC1080" OFF)
 	option(HDC1080_AUTOFETCH_GTEST "Automatically fetch GTest if not included by parent." ON)
 
 	if(HDC1080_AUTOFETCH_GTEST)
@@ -87,8 +87,6 @@ if(NOT CMAKE_CROSSCOMPILING)
 	gtest_discover_tests(${TEST_EXECUTABLE})
 
 	if(HDC1080_CODE_COVERAGE)
-		option(HDC1080_CODE_COVERAGE_EXCLUDE "Enable code coverage for HDC1080" ON)
-
 		set(GCOVR_COMMAND gcovr --root ${CMAKE_SOURCE_DIR} --exclude .clang-format --gcov-executable gcov-13 --filter '.*HDC1080/*' --exclude '.*\.test\..*')
 		set(SILENT_RUN_COMMAND ./${TEST_EXECUTABLE} > /dev/null)
 
