@@ -418,3 +418,5 @@ TEST_F(HDC1080_Test, softResetReturnsEmptyOptionalWhenI2CFails) {
 	disableI2C();
 	EXPECT_EQ(this->hdc1080.softReset(), std::nullopt);
 }
+
+// Random Comment Delete Me
