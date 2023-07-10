@@ -217,6 +217,24 @@ TEST_F(HDC1080_Test, getSerialIDReturnsEmptyOptionalWhenI2CReadFails) {
 	EXPECT_EQ(this->hdc1080.getSerialID(), std::nullopt);
 }
 
+TEST_F(HDC1080_Test, getBatteryStatusNormallyReturnsValue) {
+	const MemoryAddress configRegister		   = 0x02u;
+	const Register		configValueBatteryHigh = 0x1000u;
+	const Register		configValueBatteryLow  = 0x1800u;
+
+	EXPECT_CALL(this->i2c, read(Eq(configRegister)))
+		.WillOnce(Return(configValueBatteryHigh))
+		.WillOnce(Return(configValueBatteryLow));
+
+	EXPECT_EQ(this->hdc1080.getBatteryStatus(), HDC1080::Battery::HIGH);
+	EXPECT_EQ(this->hdc1080.getBatteryStatus(), HDC1080::Battery::LOW);
+}
+
+TEST_F(HDC1080_Test, getBatteryStatusReturnsEmptyOptionalWhenI2CReadFails) {
+	disableI2C();
+	EXPECT_EQ(this->hdc1080.getBatteryStatus(), std::nullopt);
+}
+
 TEST_F(HDC1080_Test, setConfigNormallyWritesValueWithoutReadingIfGivenAllArguments) {
 	// Note: Constructing the register value to write is tested in the constructConfigRegisterRandomChecks test.
 

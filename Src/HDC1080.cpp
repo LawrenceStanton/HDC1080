@@ -101,6 +101,14 @@ std::optional<uint64_t> HDC1080::getSerialID() {
 	return serialIdValue;
 }
 
+std::optional<HDC1080::Battery> HDC1080::getBatteryStatus() {
+	auto transmission = this->i2c->read(HDC1080_CONFIG_ADDR);
+
+	if (transmission.has_value())
+		return static_cast<HDC1080::Battery>(!(transmission.value() & HDC1080_CONFIG_BATTERY_STATUS_MASK));
+	else return std::nullopt;
+}
+
 std::optional<HDC1080::I2C::Register>
 HDC1080::getMeasurementRegister(HDC1080::I2C::MemoryAddress memAddr, uint32_t waitTime) {
 	if (!this->i2c->transmit(static_cast<uint8_t>(memAddr))) return {};

@@ -148,6 +148,11 @@ public:
 		OFF = 0x0000u,
 	};
 
+	enum class Battery : bool {
+		LOW	 = false,
+		HIGH = true,
+	};
+
 protected:
 	I2C *i2c;
 
@@ -230,7 +235,12 @@ public:
 	 */
 	std::optional<uint64_t> getSerialID();
 
-	// std::optional<bool> getBatteryStatus(); // TODO
+	/**
+	 * @brief Get the Battery Status of the HDC1080.
+	 *
+	 * @return std::optional<bool> True if the supply voltage greater than 2V8, false if less than 2V8.
+	 */
+	std::optional<Battery> getBatteryStatus();
 
 	/**
 	 * @brief Sets the HDC1080 Configuration Register given all programmable settings.
