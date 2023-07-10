@@ -2,7 +2,9 @@
 
 ## Overview
 
-The HDC1080 is an embedded temperature and humidity sensor, produced by Texas Instruments, and operates over the a I2C bus. This driver provides a simple C++ object-orientated driver to allow for control and data reception from this device, and is agnostic to any embedded platform.
+The HDC1080 is an embedded temperature and humidity sensor, produced by Texas Instruments, and operates over a I2C digital communications interface. This driver provides a simple C++ object-orientated driver to allow for control and data reception from this device, and is agnostic to any embedded platform.
+
+The design philosophy of this driver is comparatively unique in the embedded systems space. The object orientated approach results in a simple, scalable, and extensible driver, which is easy to use and understand. The driver is also designed to be agnostic to any embedded platform, and is therefore portable to any embedded system, with any I2C implementation (see [Design Patterns](#design-patterns)). The system also adopts strong unit testing with the [Google Test](https://google.github.io/googletest/) framework, allowing for a high degree of confidence in the driver's operation and ease of further development. CMake also allows for easy integration into parent projects.
 
 ## How to Use
 
