@@ -1,8 +1,8 @@
 /**
  ******************************************************************************
  * @file           : HDC1080.cpp
- * @brief          : Source file for HDC1080 Driver
- * @author			: Lawrence Stanton
+ * @brief          : Source for HDC1080 Driver
+ * @author		   : Lawrence Stanton
  ******************************************************************************
  * @attention
  *

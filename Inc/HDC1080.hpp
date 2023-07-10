@@ -1,8 +1,8 @@
 /**
  ******************************************************************************
  * @file           : HDC1080.hpp
- * @brief          : Header file for HDC1080.cpp
- * @author			: Lawrence Stanton
+ * @brief          : HDC1080 Digital Humidity and Temperature Sensor Driver
+ * @author		   : Lawrence Stanton
  ******************************************************************************
  * @attention
  *
