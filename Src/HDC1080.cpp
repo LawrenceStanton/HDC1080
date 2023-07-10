@@ -199,3 +199,7 @@ std::optional<Register> HDC1080::setHumidityResolution(HumidityResolution hRes) 
 std::optional<Register> HDC1080::setHeater(Heater heater) {
 	return setConfig(std::nullopt, std::nullopt, std::nullopt, heater);
 }
+
+std::optional<Register> HDC1080::softReset(void) {
+	return this->i2c->write(HDC1080_CONFIG_ADDR, HDC1080_CONFIG_RESET_MASK);
+}

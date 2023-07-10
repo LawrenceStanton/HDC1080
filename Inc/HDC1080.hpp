@@ -274,6 +274,14 @@ public:
 	std::optional<Register> setHumidityResolution(HumidityResolution hRes);
 	std::optional<Register> setHeater(Heater heater);
 
+	/**
+	 * @brief Performs a software reset of the HDC1080.
+	 *
+	 * @return std::optional<Register> The written value of the configuration register if successful.
+	 * @note The written value shall always be 0x8000.
+	 */
+	std::optional<Register> softReset(void);
+
 private:
 	/**
 	 * @brief Get the Temperature Register

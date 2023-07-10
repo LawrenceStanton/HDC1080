@@ -291,7 +291,7 @@ TEST_F(HDC1080_Test, setConfigShortCircuitsWhenConfigUnchangedAndReturnsCurrentC
 	EXPECT_EQ(write.value(), configInitialValue);
 }
 
-TEST_F(HDC1080_Test, setConfigReturnsEmptyOptionalWhenI2CWriteFails) {
+TEST_F(HDC1080_Test, setConfigReturnsEmptyOptionalWhenI2CFails) {
 	disableI2C();
 
 	EXPECT_EQ(
@@ -326,7 +326,7 @@ TEST_F(HDC1080_Test, setAcquisitionModeNormallySetsValue) {
 	);
 }
 
-TEST_F(HDC1080_Test, setAcquisitionModeReturnsEmptyOptionalWhenI2CWriteFails) {
+TEST_F(HDC1080_Test, setAcquisitionModeReturnsEmptyOptionalWhenI2CFails) {
 	disableI2C();
 	EXPECT_EQ(this->hdc1080.setAcquisitionMode(HDC1080::AcquisitionMode::DUAL), std::nullopt);
 }
@@ -352,7 +352,7 @@ TEST_F(HDC1080_Test, setTemperatureResolutionNormallySetsValue) {
 	);
 }
 
-TEST_F(HDC1080_Test, setTemperatureResolutionReturnsEmptyOptionalWhenI2CWriteFails) {
+TEST_F(HDC1080_Test, setTemperatureResolutionReturnsEmptyOptionalWhenI2CFails) {
 	disableI2C();
 	EXPECT_EQ(this->hdc1080.setTemperatureResolution(HDC1080::TemperatureResolution::A_11BIT), std::nullopt);
 }
@@ -383,7 +383,7 @@ TEST_F(HDC1080_Test, setHumidityResolutionNormallySetsValue) {
 	);
 }
 
-TEST_F(HDC1080_Test, setHumidityResolutionReturnsEmptyOptionalWhenI2CWriteFails) {
+TEST_F(HDC1080_Test, setHumidityResolutionReturnsEmptyOptionalWhenI2CFails) {
 	disableI2C();
 	EXPECT_EQ(this->hdc1080.setHumidityResolution(HDC1080::HumidityResolution::A_11BIT), std::nullopt);
 }
@@ -402,7 +402,19 @@ TEST_F(HDC1080_Test, setHeaterNormallySetsValue) {
 	EXPECT_EQ(this->hdc1080.setHeater(HDC1080::Heater::OFF).value(), configInitialValueHeaterOff);
 }
 
-TEST_F(HDC1080_Test, setHeaterReturnsEmptyOptionalWhenI2CWriteFails) {
+TEST_F(HDC1080_Test, setHeaterReturnsEmptyOptionalWhenI2CFails) {
 	disableI2C();
 	EXPECT_EQ(this->hdc1080.setHeater(HDC1080::Heater::ON), std::nullopt);
+}
+
+TEST_F(HDC1080_Test, softResetNormallySetsValue) {
+	const Register configExpectedWriteValue = 0x8000u;
+	EXPECT_CALL(this->i2c, write).WillRepeatedly(ReturnArg<1>());
+
+	EXPECT_EQ(this->hdc1080.softReset().value(), configExpectedWriteValue);
+}
+
+TEST_F(HDC1080_Test, softResetReturnsEmptyOptionalWhenI2CFails) {
+	disableI2C();
+	EXPECT_EQ(this->hdc1080.softReset(), std::nullopt);
 }
