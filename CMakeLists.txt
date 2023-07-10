@@ -17,21 +17,16 @@ target_include_directories(${LIBRARY} PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}/Inc
 )
 
-target_link_libraries(${LIBRARY} PUBLIC
-	${EXTERNAL_LIBRARY_TARGETS}
-)
-
-add_library(${PROJECT_NAME}::${LIBRARY} ALIAS ${LIBRARY})
+add_library(${LIBRARY}::${LIBRARY} ALIAS ${LIBRARY})
 
 if(NOT CMAKE_CROSSCOMPILING)
-	option(HDC1080_CODE_COVERAGE "Enable code coverage for HDC1080" OFF)
+	option(HDC1080_CODE_COVERAGE "Enable gcovr code coverage for HDC1080" OFF)
 	option(HDC1080_AUTOFETCH_GTEST "Automatically fetch GTest if not included by parent." ON)
 
 	if(HDC1080_AUTOFETCH_GTEST)
-			cmake_minimum_required(VERSION 3.14)
+		if(NOT TARGET GTest::gtest OR NOT TARGET GTest::gmock)
+			message(STATUS "GTest not found. Fetching...")
 
-			if(NOT TARGET GTest::gtest OR NOT TARGET GTest::gmock)
-				message(STATUS "GTest not found. Fetching...")
 			include(FetchContent)
 			FetchContent_Declare(
 				googletest
@@ -44,8 +39,6 @@ if(NOT CMAKE_CROSSCOMPILING)
 			enable_testing()
 		endif()
 	endif()
-
-	set(TEST_EXECUTABLE ${LIBRARY}_Test)
 
 	# Add addittional configuration to library target.
 	target_link_libraries(${LIBRARY} PRIVATE
@@ -61,6 +54,8 @@ if(NOT CMAKE_CROSSCOMPILING)
 	)
 
 	# GTest Test Executable
+	set(TEST_EXECUTABLE ${LIBRARY}_Test)
+	
 	add_executable(${TEST_EXECUTABLE}
 		Test/HDC1080.test.cpp
 	)
@@ -89,12 +84,12 @@ if(NOT CMAKE_CROSSCOMPILING)
 	gtest_discover_tests(${TEST_EXECUTABLE})
 
 	if(HDC1080_CODE_COVERAGE)
-		set(GCOVR_COMMAND gcovr --root ${CMAKE_SOURCE_DIR} --exclude .clang-format --gcov-executable gcov-13 --filter '.*HDC1080/*' --exclude '.*\.test\..*')
+		set(GCOVR_COMMAND gcovr --root ${CMAKE_SOURCE_DIR} --exclude .clang-format --gcov-executable gcov-13 --filter '.*HDC1080/.*' --exclude '.*\.test\..*')
 		set(SILENT_RUN_COMMAND ./${TEST_EXECUTABLE} > /dev/null)
 
 		add_custom_command(TARGET ${TEST_EXECUTABLE} POST_BUILD
-			COMMENT "Running gcovr Code Coverage for HDC1080 Tests"
-			COMMAND ${SILENT_RUN_COMMAND} && ${GCOVR_COMMAND} || echo "Code coverage failed."
+			COMMENT "Running gcovr Code Coverage for HDC1080 Tests..."
+			COMMAND ${SILENT_RUN_COMMAND} && ${GCOVR_COMMAND} || echo "Code coverage failed. All tests must pass for code coverage to run."
 		)
 	endif()
 endif()
