@@ -243,7 +243,7 @@ TEST_F(HDC1080_Test, setConfigNormallyWritesValueWithoutReadingIfGivenAllArgumen
 	const Register		configExpectedWrittenValue = 0b0011'0101'0000'0000u;
 
 	EXPECT_CALL(this->i2c, read(_)).Times(0); // No reads should be performed
-	EXPECT_CALL(this->i2c, write(Eq(configRegister), _)).Times(1);
+	EXPECT_CALL(this->i2c, write(Eq(configRegister), _)).WillOnce(ReturnArg<1>());
 
 	auto write = this->hdc1080.setConfig(
 		HDC1080::AcquisitionMode::DUAL,
@@ -260,11 +260,11 @@ TEST_F(HDC1080_Test, setConfigReturnsEmptyOptionalWhenGivenNoArguments) {
 
 TEST_F(HDC1080_Test, setConfigNormallyReadsCurrentConfigAndWritesBackNewValues) {
 	const MemoryAddress configRegister			   = 0x02u;
-	const Register		configInitialValue		   = 0x1100u; // Humidity 11-bit
-	const Register		configExpectedWrittenValue = 0b0000'0101'0000'0000u;
+	const Register		configInitialValue		   = 0x1100u; // Humidity 11-bit, Dual Acquisition
+	const Register		configExpectedWrittenValue = 0b0001'0101'0000'0000u;
 
 	EXPECT_CALL(this->i2c, read(Eq(configRegister))).WillOnce(Return(configInitialValue));
-	EXPECT_CALL(this->i2c, write(Eq(configRegister), _)).Times(1);
+	EXPECT_CALL(this->i2c, write(Eq(configRegister), _)).WillOnce(ReturnArg<1>());
 
 	auto write = this->hdc1080.setConfig(
 		{}, //
