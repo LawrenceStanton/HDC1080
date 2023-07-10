@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 3.24)
+
 project(HDC1080)
 
 set(LIBRARY ${PROJECT_NAME})
