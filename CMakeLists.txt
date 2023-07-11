@@ -77,14 +77,12 @@ if(NOT CMAKE_CROSSCOMPILING)
 	target_link_options(${TEST_EXECUTABLE} PRIVATE
 		$<$<BOOL:${HDC1080_CODE_COVERAGE}>:--coverage>
 	)
-
-	include(CTest)
 	
 	include(GoogleTest)
 	gtest_discover_tests(${TEST_EXECUTABLE})
 
 	if(HDC1080_CODE_COVERAGE)
-		set(GCOVR_COMMAND gcovr --root ${CMAKE_SOURCE_DIR} --exclude .clang-format --gcov-executable gcov-13 --filter '.*HDC1080/.*' --exclude '.*\.test\..*')
+		set(GCOVR_COMMAND gcovr --root ${CMAKE_SOURCE_DIR} --gcov-executable gcov-13 --filter '.*HDC1080/.*' --exclude '.*\.test\..*' ${CMAKE_CURRENT_BINARY_DIR})
 		set(SILENT_RUN_COMMAND ./${TEST_EXECUTABLE} > /dev/null)
 
 		add_custom_command(TARGET ${TEST_EXECUTABLE} POST_BUILD
