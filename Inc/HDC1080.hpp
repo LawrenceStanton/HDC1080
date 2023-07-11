@@ -24,41 +24,6 @@
 	#include "gtest/gtest.h"
 #endif
 
-#define HDC1080_I2C_ADDR 0x40u
-#define HDC1080_MEM_SIZE 2u
-
-/* Register Addresses */
-#define HDC1080_TEMPERATURE_ADDR	 0x00u
-#define HDC1080_HUMIDITY_ADDR		 0x01u
-#define HDC1080_CONFIG_ADDR			 0x02u
-#define HDC1080_SERIAL_ID_ADDR		 0xFBu
-#define HDC1080_MANUFACTURER_ID_ADDR 0xFEu
-#define HDC1080_DEVICE_ID_ADDR		 0xFFu
-
-/* Register Address Sizes (in bytes) */
-#define HDC1080_TEMPERATURE_ADDR_SIZE	  2u
-#define HDC1080_HUMIDITY_ADDR_SIZE		  2u
-#define HDC1080_CONFIG_ADDR_SIZE		  2u
-#define HDC1080_SERIAL_ID_ADDR_SIZE		  6u
-#define HDC1080_MANUFACTURER_ID_ADDR_SIZE 2u
-#define HDC1080_DEVICE_ID_ADDR_SIZE		  2u
-
-/* Power-on Reset Values */
-// PORV = Power-On Reset Value
-#define HDC1080_TEMPERATURE_ADDR_PORV	  0x0000u
-#define HDC1080_HUMIDITY_ADDR_PORV		  0x0000u
-#define HDC1080_CONFIG_ADDR_PORV		  0x1000u
-#define HDC1080_MANUFACTURER_ID_ADDR_PORV 0x5449u
-#define HDC1080_DEVICE_ID_ADDR_PORV		  0x1050u
-
-/* Configuration Register Bit Masks */
-#define HDC1080_CONFIG_RESET_MASK				   0x8000u
-#define HDC1080_CONFIG_HEATER_MASK				   0x2000u
-#define HDC1080_CONFIG_ACQUISITION_MODE_MASK	   0x1000u
-#define HDC1080_CONFIG_BATTERY_STATUS_MASK		   0x0800u
-#define HDC1080_CONFIG_TEMPERATURE_RESOLUTION_MASK 0x0400u
-#define HDC1080_CONFIG_HUMIDITY_RESOLUTION_MASK	   0x0300u
-
 class HDC1080 {
 public:
 	/**
@@ -120,7 +85,7 @@ public:
 		 *
 		 * @param ms The number of milliseconds to delay for.
 		 */
-		virtual void delay(uint32_t ms) = 0;
+		virtual void delay(uint32_t ms) const = 0;
 
 		virtual ~I2C() = default;
 	};
@@ -173,38 +138,36 @@ public:
 
 	/* Floating Point Measurement Conversion Methods */
 	/**
-	 * @brief Updates the uint16_t and real class copies of the temperature measurement.
+	 * @brief Get the temperature measurement in degrees Celsius, given the register value.
 	 *
-	 * @return float The updated real temperature measurement.
+	 * @return float The temperature measurement.
 	 */
 	static float getTemperature(Register temperatureRegister);
 
 	/**
-	 * @brief Get the Temperature
+	 * @brief Get the Temperature from the HDC1080.
 	 *
-	 * @return float The updated real temperature measurement.
+	 * @return float The temperature measurement in degrees Celsius.
 	 *
-	 * @note In the event of failure, this results in T = -40.0.
+	 * @note In the event of I2C failure, this results in T = -40.0.
 	 */
-	float getTemperature();
+	float getTemperature() const;
 
 	/**
-	 * @brief Updates the uint16_t and real class copies of the humidity measurement.
+	 * @brief Get the humidity measurement in percent relative humidity, given the register value.
 	 *
-	 * @return float The updated real humidity measurement.
-	 *
-	 * @note In the event of hReg = 0x0000u, which might indicate a failure, this results in H = 0.0.
+	 * @return float The humidity measurement in percent relative humidity.
 	 */
 	static float getHumidity(Register humidityRegister);
 
 	/**
-	 * @brief Get the Humidity
+	 * @brief Get the Humidity from the HDC1080.
 	 *
-	 * @return float The updated real humidity measurement.
+	 * @return float The humidity measurement in percent relative humidity.
 	 *
-	 * @note In the event of failure, this results in H = 0.0.
+	 * @note In the event of I2C failure, this results in H = 0.0.
 	 */
-	float getHumidity();
+	float getHumidity() const;
 
 	/* Other Device Information Get Methods */
 	/**
@@ -212,14 +175,14 @@ public:
 	 *
 	 * @return std::optional<Register> 0x1050 if successful.
 	 */
-	inline std::optional<Register> getDeviceID() { return this->i2c->read(HDC1080_DEVICE_ID_ADDR); }
+	std::optional<Register> getDeviceID() const;
 
 	/**
 	 * @brief Get the Manufacturer ID of the HDC1080.
 	 *
 	 * @return std::optional<uint16_t> 0x5449 if successful.
 	 */
-	inline std::optional<uint16_t> getManufacturerID() { return this->i2c->read(HDC1080_MANUFACTURER_ID_ADDR); }
+	std::optional<uint16_t> getManufacturerID() const;
 
 	/**
 	 * @brief Get the Serial ID of the HDC1080.
@@ -230,14 +193,14 @@ public:
 	 * 		 This driver will assume the register map is correct.
 	 * @note Unused bits are set to 0.
 	 */
-	std::optional<uint64_t> getSerialID();
+	std::optional<uint64_t> getSerialID() const;
 
 	/**
 	 * @brief Get the Battery Status of the HDC1080.
 	 *
 	 * @return std::optional<bool> True if the supply voltage greater than 2V8, false if less than 2V8.
 	 */
-	std::optional<Battery> getBatteryStatus();
+	std::optional<Battery> getBatteryStatus() const;
 
 	/**
 	 * @brief Sets the HDC1080 Configuration Register given all programmable settings.
@@ -258,7 +221,7 @@ public:
 		std::optional<TemperatureResolution> tRes,
 		std::optional<HumidityResolution>	 hRes,
 		std::optional<Heater>				 heater
-	);
+	) const;
 
 	/**
 	 * @brief Single Configuration Register Set Methods.
@@ -266,10 +229,10 @@ public:
 	 * @param configParam The desired configuration parameter to set.
 	 * @return std::optional<Register> The written value of the configuration register if successful.
 	 */
-	std::optional<Register> setAcquisitionMode(AcquisitionMode acqMode);
-	std::optional<Register> setTemperatureResolution(TemperatureResolution tRes);
-	std::optional<Register> setHumidityResolution(HumidityResolution hRes);
-	std::optional<Register> setHeater(Heater heater);
+	std::optional<Register> setAcquisitionMode(AcquisitionMode acqMode) const;
+	std::optional<Register> setTemperatureResolution(TemperatureResolution tRes) const;
+	std::optional<Register> setHumidityResolution(HumidityResolution hRes) const;
+	std::optional<Register> setHeater(Heater heater) const;
 
 	/**
 	 * @brief Performs a software reset of the HDC1080.
@@ -277,7 +240,7 @@ public:
 	 * @return std::optional<Register> The written value of the configuration register if successful.
 	 * @note The written value shall always be 0x8000.
 	 */
-	std::optional<Register> softReset(void);
+	std::optional<Register> softReset(void) const;
 
 private:
 	/**
@@ -285,14 +248,14 @@ private:
 	 *
 	 * @return std::optional<Register> The fetched value of the temperature register if successful.
 	 */
-	std::optional<Register> getTemperatureRegister();
+	std::optional<Register> getTemperatureRegister() const;
 
 	/**
 	 * @brief Get the Humidity Register
 	 *
 	 * @return std::optional<Register> The fetched value of the humidity register if successful.
 	 */
-	std::optional<Register> getHumidityRegister();
+	std::optional<Register> getHumidityRegister() const;
 
 	/**
 	 * @brief Get a Measurement Register from the HDC1080.
@@ -301,7 +264,7 @@ private:
 	 * @param waitTime The measurement conversion delay time in milliseconds.
 	 * @return std::optional<Register> The fetched value of the measurement register if successful.
 	 */
-	std::optional<Register> getMeasurementRegister(MemoryAddress memAddr, uint32_t waitTime = 0);
+	std::optional<Register> getMeasurementRegister(MemoryAddress memAddr, uint32_t waitTime = 0) const;
 
 /* Registration for Private Member Testing Purposes Only */
 #ifdef HDC1080_GTEST_TESTING

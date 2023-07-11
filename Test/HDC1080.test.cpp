@@ -1,3 +1,11 @@
+/**
+ ******************************************************************************
+ * @file			: HDC1080.test.cpp
+ * @brief			: Googletest Unit Testing for HDC1080.cpp
+ * @author			: Lawrence Stanton
+ ******************************************************************************
+ */
+
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -8,7 +16,6 @@
 #include "../Src/HDC1080.cpp" // For static helper functions.
 
 using ::testing::_;
-using ::testing::AnyNumber;
 using ::testing::Eq;
 using ::testing::Return;
 using ::testing::ReturnArg;
@@ -91,7 +98,7 @@ public:
 	MOCK_METHOD(std::optional<uint8_t>, transmit, (uint8_t data), (final));
 	MOCK_METHOD(std::optional<uint8_t>, receive, (), (final));
 
-	void delay(uint32_t ms) final {}
+	virtual void delay(uint32_t ms) const final {}
 };
 
 class HDC1080_Test : public ::testing::Test {
@@ -99,9 +106,11 @@ public:
 	MockedI2C i2c{};
 	HDC1080	  hdc1080{&this->i2c};
 
-	inline void disableI2C() {
-		EXPECT_CALL(this->i2c, transmit(_)).WillRepeatedly(Return(std::nullopt));
-		EXPECT_CALL(this->i2c, receive()).WillRepeatedly(Return(std::nullopt));
+	inline void disableI2C(void) {
+		ON_CALL(this->i2c, read(_)).WillByDefault(Return(std::nullopt));
+		ON_CALL(this->i2c, write(_, _)).WillByDefault(Return(std::nullopt));
+		ON_CALL(this->i2c, transmit(_)).WillByDefault(Return(std::nullopt));
+		ON_CALL(this->i2c, receive()).WillByDefault(Return(std::nullopt));
 	}
 };
 

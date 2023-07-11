@@ -18,6 +18,41 @@
 
 #include "HDC1080.hpp"
 
+#define HDC1080_I2C_ADDR 0x40u
+#define HDC1080_MEM_SIZE 2u
+
+/* Register Addresses */
+#define HDC1080_TEMPERATURE_ADDR	 0x00u
+#define HDC1080_HUMIDITY_ADDR		 0x01u
+#define HDC1080_CONFIG_ADDR			 0x02u
+#define HDC1080_SERIAL_ID_ADDR		 0xFBu
+#define HDC1080_MANUFACTURER_ID_ADDR 0xFEu
+#define HDC1080_DEVICE_ID_ADDR		 0xFFu
+
+/* Register Address Sizes (in bytes) */
+#define HDC1080_TEMPERATURE_ADDR_SIZE	  2u
+#define HDC1080_HUMIDITY_ADDR_SIZE		  2u
+#define HDC1080_CONFIG_ADDR_SIZE		  2u
+#define HDC1080_SERIAL_ID_ADDR_SIZE		  6u
+#define HDC1080_MANUFACTURER_ID_ADDR_SIZE 2u
+#define HDC1080_DEVICE_ID_ADDR_SIZE		  2u
+
+/* Power-on Reset Values */
+// PORV = Power-On Reset Value
+#define HDC1080_TEMPERATURE_ADDR_PORV	  0x0000u
+#define HDC1080_HUMIDITY_ADDR_PORV		  0x0000u
+#define HDC1080_CONFIG_ADDR_PORV		  0x1000u
+#define HDC1080_MANUFACTURER_ID_ADDR_PORV 0x5449u
+#define HDC1080_DEVICE_ID_ADDR_PORV		  0x1050u
+
+/* Configuration Register Bit Masks */
+#define HDC1080_CONFIG_RESET_MASK				   0x8000u
+#define HDC1080_CONFIG_HEATER_MASK				   0x2000u
+#define HDC1080_CONFIG_ACQUISITION_MODE_MASK	   0x1000u
+#define HDC1080_CONFIG_BATTERY_STATUS_MASK		   0x0800u
+#define HDC1080_CONFIG_TEMPERATURE_RESOLUTION_MASK 0x0400u
+#define HDC1080_CONFIG_HUMIDITY_RESOLUTION_MASK	   0x0300u
+
 /**
  * @note The below values are given a wide margin above the maximum conversion time specifications
  * 		 to allow for a imprecise delay timer method.
@@ -56,10 +91,10 @@ inline static Register writeBits(Register reg, Register bits, Register mask) {
 HDC1080::HDC1080(HDC1080::I2C *i2c) : i2c(i2c) {}
 
 float HDC1080::getTemperature(Register temperatureRegister) {
-	return (float)temperatureRegister * (165.0 / 65536.0) - 40.0;
+	return static_cast<float>(temperatureRegister * (165.0 / 65536.0) - 40.0); // Refer to HDC1080 datasheet for formula
 }
 
-float HDC1080::getTemperature() {
+float HDC1080::getTemperature() const {
 	auto temperatureRegister = getTemperatureRegister();
 
 	if (temperatureRegister.has_value()) return getTemperature(temperatureRegister.value());
@@ -68,10 +103,18 @@ float HDC1080::getTemperature() {
 }
 
 float HDC1080::getHumidity(Register humidityRegister) {
-	return (float)humidityRegister * (25.0 / 16384.0);
+	return static_cast<float>(humidityRegister * (25.0 / 16384.0)); // Refer to HDC1080 datasheet for formula
 }
 
-float HDC1080::getHumidity() {
+std::optional<Register> HDC1080::getDeviceID() const {
+	return this->i2c->read(HDC1080_DEVICE_ID_ADDR);
+}
+
+std::optional<uint16_t> HDC1080::getManufacturerID() const {
+	return this->i2c->read(HDC1080_MANUFACTURER_ID_ADDR);
+}
+
+float HDC1080::getHumidity() const {
 	auto humidityRegister = getHumidityRegister();
 
 	if (humidityRegister.has_value()) return getHumidity(humidityRegister.value());
@@ -79,15 +122,15 @@ float HDC1080::getHumidity() {
 	return 0.0;
 }
 
-std::optional<Register> HDC1080::getTemperatureRegister() {
+std::optional<Register> HDC1080::getTemperatureRegister() const {
 	return getMeasurementRegister(HDC1080_TEMPERATURE_ADDR, HDC1080_CONVERSION_TIME_TEMPERATURE);
 }
 
-std::optional<Register> HDC1080::getHumidityRegister() {
+std::optional<Register> HDC1080::getHumidityRegister() const {
 	return getMeasurementRegister(HDC1080_HUMIDITY_ADDR, HDC1080_CONVERSION_TIME_HUMIDITY);
 }
 
-std::optional<uint64_t> HDC1080::getSerialID() {
+std::optional<uint64_t> HDC1080::getSerialID() const {
 	Register serialID[3];
 	for (unsigned int i = 0; i < 3; i++) {
 		auto transmission = this->i2c->read(HDC1080_SERIAL_ID_ADDR + i);
@@ -101,7 +144,7 @@ std::optional<uint64_t> HDC1080::getSerialID() {
 	return serialIdValue;
 }
 
-std::optional<HDC1080::Battery> HDC1080::getBatteryStatus() {
+std::optional<HDC1080::Battery> HDC1080::getBatteryStatus() const {
 	auto transmission = this->i2c->read(HDC1080_CONFIG_ADDR);
 
 	if (transmission.has_value())
@@ -110,7 +153,7 @@ std::optional<HDC1080::Battery> HDC1080::getBatteryStatus() {
 }
 
 std::optional<HDC1080::I2C::Register>
-HDC1080::getMeasurementRegister(HDC1080::I2C::MemoryAddress memAddr, uint32_t waitTime) {
+HDC1080::getMeasurementRegister(HDC1080::I2C::MemoryAddress memAddr, uint32_t waitTime) const {
 	if (!this->i2c->transmit(static_cast<uint8_t>(memAddr))) return {};
 
 	this->i2c->delay(waitTime);
@@ -155,7 +198,7 @@ std::optional<Register> HDC1080::setConfig(
 	std::optional<TemperatureResolution> tRes,
 	std::optional<HumidityResolution>	 hRes,
 	std::optional<Heater>				 heater
-) {
+) const {
 	if (!acqMode && !tRes && !hRes && !heater) return {};
 
 	// Check for all options being supplied
@@ -184,22 +227,22 @@ std::optional<Register> HDC1080::setConfig(
 	}
 }
 
-std::optional<Register> HDC1080::setAcquisitionMode(AcquisitionMode acqMode) {
+std::optional<Register> HDC1080::setAcquisitionMode(AcquisitionMode acqMode) const {
 	return setConfig(acqMode, std::nullopt, std::nullopt, std::nullopt);
 }
 
-std::optional<Register> HDC1080::setTemperatureResolution(TemperatureResolution tRes) {
+std::optional<Register> HDC1080::setTemperatureResolution(TemperatureResolution tRes) const {
 	return setConfig(std::nullopt, tRes, std::nullopt, std::nullopt);
 }
 
-std::optional<Register> HDC1080::setHumidityResolution(HumidityResolution hRes) {
+std::optional<Register> HDC1080::setHumidityResolution(HumidityResolution hRes) const {
 	return setConfig(std::nullopt, std::nullopt, hRes, std::nullopt);
 }
 
-std::optional<Register> HDC1080::setHeater(Heater heater) {
+std::optional<Register> HDC1080::setHeater(Heater heater) const {
 	return setConfig(std::nullopt, std::nullopt, std::nullopt, heater);
 }
 
-std::optional<Register> HDC1080::softReset(void) {
+std::optional<Register> HDC1080::softReset(void) const {
 	return this->i2c->write(HDC1080_CONFIG_ADDR, HDC1080_CONFIG_RESET_MASK);
 }
