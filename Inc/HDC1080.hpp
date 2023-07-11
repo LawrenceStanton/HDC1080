@@ -121,6 +121,8 @@ public:
 		 * @param ms The number of milliseconds to delay for.
 		 */
 		virtual void delay(uint32_t ms) = 0;
+
+		virtual ~I2C() = default;
 	};
 
 	using MemoryAddress = I2C::MemoryAddress;
@@ -167,12 +169,7 @@ public:
 	 */
 	HDC1080(I2C *i2c);
 
-	// inline ~HDC1080() { softReset(); }
-
-	/**
-	 * @brief Triggers a software reset of the HDC1080 by setting the respective bit in the configuration register.
-	 */
-	// inline void softReset() { setuint16_t(HDC1080_CONFIG_ADDR, HDC1080_CONFIG_RESET); };
+	~HDC1080() = default;
 
 	/* Floating Point Measurement Conversion Methods */
 	/**
