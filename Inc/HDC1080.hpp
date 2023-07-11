@@ -24,6 +24,8 @@
 	#include "gtest/gtest.h"
 #endif
 
+#define HDC1080_I2C_ADDR 0x40u
+
 class HDC1080 {
 public:
 	/**

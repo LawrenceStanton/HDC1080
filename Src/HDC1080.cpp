@@ -18,7 +18,6 @@
 
 #include "HDC1080.hpp"
 
-#define HDC1080_I2C_ADDR 0x40u
 #define HDC1080_MEM_SIZE 2u
 
 /* Register Addresses */
