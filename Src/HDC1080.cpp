@@ -89,20 +89,39 @@ inline static Register writeBits(Register reg, Register bits, Register mask) {
 
 HDC1080::HDC1080(HDC1080::I2C *i2c) : i2c(i2c) {}
 
-float HDC1080::getTemperature(Register temperatureRegister) {
+/* Floating Point Measurement Conversion Methods */
+/**
+ * @brief Get the temperature measurement in degrees Celsius, given the register value.
+ *
+ * @return float The temperature measurement.
+ */
+static float constexpr convertTemperature(Register temperatureRegister) {
 	return static_cast<float>(temperatureRegister * (165.0 / 65536.0) - 40.0); // Refer to HDC1080 datasheet for formula
+}
+
+/**
+ * @brief Get the humidity measurement in percent relative humidity, given the register value.
+ *
+ * @return float The humidity measurement in percent relative humidity.
+ */
+static float convertHumidity(Register humidityRegister) {
+	return static_cast<float>(humidityRegister * (25.0 / 16384.0)); // Refer to HDC1080 datasheet for formula
 }
 
 float HDC1080::getTemperature() const {
 	auto temperatureRegister = getTemperatureRegister();
 
-	if (temperatureRegister.has_value()) return getTemperature(temperatureRegister.value());
+	if (temperatureRegister.has_value()) return convertTemperature(temperatureRegister.value());
 
 	return -40.0;
 }
 
-float HDC1080::getHumidity(Register humidityRegister) {
-	return static_cast<float>(humidityRegister * (25.0 / 16384.0)); // Refer to HDC1080 datasheet for formula
+float HDC1080::getHumidity() const {
+	auto humidityRegister = getHumidityRegister();
+
+	if (humidityRegister.has_value()) return convertHumidity(humidityRegister.value());
+
+	return 0.0;
 }
 
 std::optional<Register> HDC1080::getDeviceID() const {
@@ -111,22 +130,6 @@ std::optional<Register> HDC1080::getDeviceID() const {
 
 std::optional<uint16_t> HDC1080::getManufacturerID() const {
 	return this->i2c->read(HDC1080_MANUFACTURER_ID_ADDR);
-}
-
-float HDC1080::getHumidity() const {
-	auto humidityRegister = getHumidityRegister();
-
-	if (humidityRegister.has_value()) return getHumidity(humidityRegister.value());
-
-	return 0.0;
-}
-
-std::optional<Register> HDC1080::getTemperatureRegister() const {
-	return getMeasurementRegister(HDC1080_TEMPERATURE_ADDR, HDC1080_CONVERSION_TIME_TEMPERATURE);
-}
-
-std::optional<Register> HDC1080::getHumidityRegister() const {
-	return getMeasurementRegister(HDC1080_HUMIDITY_ADDR, HDC1080_CONVERSION_TIME_HUMIDITY);
 }
 
 std::optional<uint64_t> HDC1080::getSerialID() const {
@@ -149,6 +152,14 @@ std::optional<HDC1080::Battery> HDC1080::getBatteryStatus() const {
 	if (transmission.has_value())
 		return static_cast<HDC1080::Battery>(!(transmission.value() & HDC1080_CONFIG_BATTERY_STATUS_MASK));
 	else return std::nullopt;
+}
+
+std::optional<Register> HDC1080::getTemperatureRegister() const {
+	return getMeasurementRegister(HDC1080_TEMPERATURE_ADDR, HDC1080_CONVERSION_TIME_TEMPERATURE);
+}
+
+std::optional<Register> HDC1080::getHumidityRegister() const {
+	return getMeasurementRegister(HDC1080_HUMIDITY_ADDR, HDC1080_CONVERSION_TIME_HUMIDITY);
 }
 
 std::optional<HDC1080::I2C::Register>

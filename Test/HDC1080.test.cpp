@@ -26,15 +26,15 @@ using Register		= HDC1080::I2C::Register;
 // Tests of Static Functions
 
 TEST(HDC1080_TestStatic, getTemperatureStaticImplementsExpectedEquation) {
-	EXPECT_FLOAT_EQ(HDC1080::getTemperature(0x0000u), -40.0);
-	EXPECT_FLOAT_EQ(HDC1080::getTemperature(0x1234u), -28.26751);
-	EXPECT_FLOAT_EQ(HDC1080::getTemperature(0xFFFFu), 124.99748);
+	EXPECT_FLOAT_EQ(convertTemperature(0x0000u), -40.0);
+	EXPECT_FLOAT_EQ(convertTemperature(0x1234u), -28.26751);
+	EXPECT_FLOAT_EQ(convertTemperature(0xFFFFu), 124.99748);
 }
 
 TEST(HDC1080_TestStatic, getHumidityStaticImplementsExpectedEquation) {
-	EXPECT_FLOAT_EQ(HDC1080::getHumidity(0x0000u), 0.0);
-	EXPECT_FLOAT_EQ(HDC1080::getHumidity(0x1234u), 7.1105957);
-	EXPECT_FLOAT_EQ(HDC1080::getHumidity(0xFFFFu), 99.99847);
+	EXPECT_FLOAT_EQ(convertHumidity(0x0000u), 0.0);
+	EXPECT_FLOAT_EQ(convertHumidity(0x1234u), 7.1105957);
+	EXPECT_FLOAT_EQ(convertHumidity(0xFFFFu), 99.99847);
 }
 
 TEST(HDC1080_TestStatic, constructConfigRegisterRandomChecks) {
@@ -141,7 +141,7 @@ TEST_F(HDC1080_Test, getTemperatureReturnsUpdatedValue) {
 	EXPECT_CALL(this->i2c, transmit(_)).WillRepeatedly(ReturnArg<0>());
 	EXPECT_CALL(this->i2c, receive()).WillOnce(Return(0xABu)).WillOnce(Return(0xCDu));
 
-	EXPECT_FLOAT_EQ(this->hdc1080.getTemperature(), HDC1080::getTemperature(0xABCDu));
+	EXPECT_FLOAT_EQ(this->hdc1080.getTemperature(), convertTemperature(0xABCDu));
 }
 
 TEST_F(HDC1080_Test, getHumidityRegisterNormallyReturnsValue) {
@@ -161,7 +161,7 @@ TEST_F(HDC1080_Test, getHumidityReturnsUpdatedValue) {
 	EXPECT_CALL(this->i2c, transmit(_)).WillRepeatedly(ReturnArg<0>());
 	EXPECT_CALL(this->i2c, receive()).WillOnce(Return(0xABu)).WillOnce(Return(0xCDu));
 
-	EXPECT_FLOAT_EQ(this->hdc1080.getHumidity(), HDC1080::getHumidity(0xABCDu));
+	EXPECT_FLOAT_EQ(this->hdc1080.getHumidity(), convertHumidity(0xABCDu));
 }
 
 TEST_F(HDC1080_Test, getHumidityRegisterReturnsEmptyOptionalWhenI2CReceiveFails) {

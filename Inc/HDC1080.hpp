@@ -138,14 +138,6 @@ public:
 
 	~HDC1080() = default;
 
-	/* Floating Point Measurement Conversion Methods */
-	/**
-	 * @brief Get the temperature measurement in degrees Celsius, given the register value.
-	 *
-	 * @return float The temperature measurement.
-	 */
-	static float getTemperature(Register temperatureRegister);
-
 	/**
 	 * @brief Get the Temperature from the HDC1080.
 	 *
@@ -154,13 +146,6 @@ public:
 	 * @note In the event of I2C failure, this results in T = -40.0.
 	 */
 	float getTemperature() const;
-
-	/**
-	 * @brief Get the humidity measurement in percent relative humidity, given the register value.
-	 *
-	 * @return float The humidity measurement in percent relative humidity.
-	 */
-	static float getHumidity(Register humidityRegister);
 
 	/**
 	 * @brief Get the Humidity from the HDC1080.
@@ -250,14 +235,14 @@ private:
 	 *
 	 * @return std::optional<Register> The fetched value of the temperature register if successful.
 	 */
-	std::optional<Register> getTemperatureRegister() const;
+	inline std::optional<Register> getTemperatureRegister() const;
 
 	/**
 	 * @brief Get the Humidity Register
 	 *
 	 * @return std::optional<Register> The fetched value of the humidity register if successful.
 	 */
-	std::optional<Register> getHumidityRegister() const;
+	inline std::optional<Register> getHumidityRegister() const;
 
 	/**
 	 * @brief Get a Measurement Register from the HDC1080.
