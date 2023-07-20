@@ -2,9 +2,13 @@ name: CTest
 
 on:
     push:
-        branches: ['main']
+        paths-ignore:
+            - 'README.md'
+            - 'LICENSE.md'
+            - 'Examples/**'
     pull_request:
         branches: ['main']
+    workflow_dispatch:
 
 env:
     BUILD_TYPE: Release
