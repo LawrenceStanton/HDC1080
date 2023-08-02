@@ -1,5 +1,9 @@
 # HDC1080 Temperature and Humidity Sensor Driver
 
+[![Licence](https://img.shields.io/github/license/LawrenceStanton/HDC1080?label=Licence)](LICENCE.md)
+[![CodeQL](https://github.com/LawrenceStanton/HDC1080/actions/workflows/codeql.yml/badge.svg)](https://github.com/LawrenceStanton/HDC1080/actions/workflows/codeql.yml)
+[![CTest](https://github.com/LawrenceStanton/HDC1080/actions/workflows/ctest.yml/badge.svg)](https://github.com/LawrenceStanton/HDC1080/actions/workflows/ctest.yml)
+
 ## Overview
 
 The HDC1080 is an embedded temperature and humidity sensor, produced by Texas Instruments, and operates over a I2C digital communications interface. This driver provides a simple C++ object-orientated driver to allow for control and data reception from this device, and is agnostic to any embedded platform.
