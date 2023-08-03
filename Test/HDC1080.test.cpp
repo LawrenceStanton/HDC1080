@@ -95,10 +95,10 @@ TEST(HDC1080_TestStatic, decodeConfigRegisterRandomChecks) {
 
 class MockedI2C : public HDC1080::I2C {
 public:
-	MOCK_METHOD(std::optional<Register>, read, (MemoryAddress addr), (final));
-	MOCK_METHOD(std::optional<Register>, write, (MemoryAddress addr, Register data), (final));
-	MOCK_METHOD(std::optional<uint8_t>, transmit, (uint8_t data), (final));
-	MOCK_METHOD(std::optional<uint8_t>, receive, (), (final));
+	MOCK_METHOD(std::optional<Register>, read, (MemoryAddress addr), (override final));
+	MOCK_METHOD(std::optional<Register>, write, (MemoryAddress addr, Register data), (override final));
+	MOCK_METHOD(std::optional<uint8_t>, transmit, (uint8_t data), (override final));
+	MOCK_METHOD(std::optional<uint8_t>, receive, (), (override final));
 
 	virtual void delay(uint32_t ms) const final {}
 };
@@ -106,18 +106,18 @@ public:
 class HDC1080_Test : public ::testing::Test {
 public:
 	MockedI2C i2c{};
-	HDC1080	  hdc1080{&this->i2c};
+	HDC1080	  hdc1080{i2c};
 
 	inline void disableI2C(void) {
-		ON_CALL(this->i2c, read(_)).WillByDefault(Return(nullopt));
-		ON_CALL(this->i2c, write(_, _)).WillByDefault(Return(nullopt));
-		ON_CALL(this->i2c, transmit(_)).WillByDefault(Return(nullopt));
-		ON_CALL(this->i2c, receive()).WillByDefault(Return(nullopt));
+		ON_CALL(this->i2c, read).WillByDefault(Return(nullopt));
+		ON_CALL(this->i2c, write).WillByDefault(Return(nullopt));
+		ON_CALL(this->i2c, transmit).WillByDefault(Return(nullopt));
+		ON_CALL(this->i2c, receive).WillByDefault(Return(nullopt));
 	}
 };
 
 TEST_F(HDC1080_Test, constructorAssignsI2cInterfacePointer) {
-	ASSERT_EQ(this->hdc1080.i2c, &this->i2c);
+	ASSERT_EQ(&this->hdc1080.i2c, &this->i2c);
 }
 
 TEST_F(HDC1080_Test, getTemperatureRegisterNormallyReturnsValue) {

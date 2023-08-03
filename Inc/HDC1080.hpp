@@ -74,7 +74,7 @@ public:
 		 * @note This function is normally used to get measurement data from the HDC1080, where some measurement
 		 * delays are necessary, and therefore this driver will assume implementation of the I2C protocol.
 		 */
-		virtual std::optional<uint8_t> receive()			  = 0;
+		virtual std::optional<uint8_t> receive(void)		  = 0;
 
 		/**
 		 * @brief Delay for a given number of milliseconds.
@@ -119,20 +119,15 @@ public:
 	};
 
 protected:
-	I2C *i2c;
+	I2C &i2c;
 
 public:
 	/**
-	 * @brief Construct a new HDC1080::HDC1080 object given all configuration settings.
+	 * @brief Construct a new HDC1080 client.
 	 *
-	 * @param acqMode	The Mode of Acquisition (single or dual measurements).
-	 * @param tRes		The resolution of the temperature measurement (11 or 14 bit).
-	 * @param hRes		The resolution of the humidity measurement (8, 11, or 14 bit).
-	 * @param heater	The heater setting (on or off).
+	 * @param i2c The I2C interface to use for communication with the HDC1080.
 	 */
-	HDC1080(I2C *i2c);
-
-	~HDC1080() = default;
+	HDC1080(I2C &i2c);
 
 	/**
 	 * @brief Get the Temperature from the HDC1080.

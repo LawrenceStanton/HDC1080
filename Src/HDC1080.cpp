@@ -67,27 +67,7 @@
 using Register		= HDC1080::I2C::Register;
 using MemoryAddress = HDC1080::I2C::MemoryAddress;
 
-inline static Register setBits(Register reg, Register bits) {
-	return (reg | bits);
-}
-
-inline static Register clearBits(Register reg, Register bits) {
-	return (reg & ~bits);
-}
-
-/**
- * @brief Writes the given bits to the given register, masking the bits to be written with the given mask.
- *
- * @param reg The register to write to.
- * @param bits The bits to write to the register.
- * @param mask The mask to apply to the bits to be written.
- * @return Register
- */
-inline static Register writeBits(Register reg, Register bits, Register mask) {
-	return (reg & ~mask) | (bits & mask);
-}
-
-HDC1080::HDC1080(HDC1080::I2C *i2c) : i2c(i2c) {}
+HDC1080::HDC1080(I2C &i2c) : i2c{i2c} {}
 
 /* Floating Point Measurement Conversion Methods */
 /**
@@ -125,17 +105,17 @@ float HDC1080::getHumidity() const {
 }
 
 std::optional<Register> HDC1080::getDeviceID() const {
-	return this->i2c->read(HDC1080_DEVICE_ID_ADDR);
+	return this->i2c.read(HDC1080_DEVICE_ID_ADDR);
 }
 
 std::optional<uint16_t> HDC1080::getManufacturerID() const {
-	return this->i2c->read(HDC1080_MANUFACTURER_ID_ADDR);
+	return this->i2c.read(HDC1080_MANUFACTURER_ID_ADDR);
 }
 
 std::optional<uint64_t> HDC1080::getSerialID() const {
 	Register serialID[3];
 	for (unsigned int i = 0; i < 3; i++) {
-		auto transmission = this->i2c->read(HDC1080_SERIAL_ID_ADDR + i);
+		auto transmission = this->i2c.read(HDC1080_SERIAL_ID_ADDR + i);
 		if (transmission.has_value()) serialID[i] = transmission.value();
 		else return std::nullopt;
 	}
@@ -147,7 +127,7 @@ std::optional<uint64_t> HDC1080::getSerialID() const {
 }
 
 std::optional<HDC1080::Battery> HDC1080::getBatteryStatus() const {
-	auto transmission = this->i2c->read(HDC1080_CONFIG_ADDR);
+	auto transmission = this->i2c.read(HDC1080_CONFIG_ADDR);
 
 	if (transmission.has_value())
 		return static_cast<HDC1080::Battery>(!(transmission.value() & HDC1080_CONFIG_BATTERY_STATUS_MASK));
@@ -164,13 +144,13 @@ std::optional<Register> HDC1080::getHumidityRegister() const {
 
 std::optional<HDC1080::I2C::Register>
 HDC1080::getMeasurementRegister(HDC1080::I2C::MemoryAddress memAddr, uint32_t waitTime) const {
-	if (!this->i2c->transmit(static_cast<uint8_t>(memAddr))) return {};
+	if (!this->i2c.transmit(static_cast<uint8_t>(memAddr))) return {};
 
-	this->i2c->delay(waitTime);
+	this->i2c.delay(waitTime);
 
 	std::optional<uint8_t> transmissionData[2];
 	for (auto &&data : transmissionData) {
-		data = this->i2c->receive();
+		data = this->i2c.receive();
 		if (!data) return {};
 	}
 
@@ -216,9 +196,9 @@ std::optional<Register> HDC1080::setConfig(
 		Config config{acqMode.value(), tRes.value(), hRes.value(), heater.value()};
 
 		auto newConfigRegister = constructConfigRegister(config);
-		return this->i2c->write(HDC1080_CONFIG_ADDR, newConfigRegister);
+		return this->i2c.write(HDC1080_CONFIG_ADDR, newConfigRegister);
 	} else {
-		auto currentConfigRegister = this->i2c->read(HDC1080_CONFIG_ADDR);
+		auto currentConfigRegister = this->i2c.read(HDC1080_CONFIG_ADDR);
 
 		if (!currentConfigRegister) return {};
 
@@ -233,7 +213,7 @@ std::optional<Register> HDC1080::setConfig(
 
 		if (newConfigRegister == currentConfigRegister.value()) return newConfigRegister;
 
-		return this->i2c->write(HDC1080_CONFIG_ADDR, newConfigRegister);
+		return this->i2c.write(HDC1080_CONFIG_ADDR, newConfigRegister);
 	}
 }
 
@@ -254,5 +234,5 @@ std::optional<Register> HDC1080::setHeater(Heater heater) const {
 }
 
 std::optional<Register> HDC1080::softReset(void) const {
-	return this->i2c->write(HDC1080_CONFIG_ADDR, HDC1080_CONFIG_RESET_MASK);
+	return this->i2c.write(HDC1080_CONFIG_ADDR, HDC1080_CONFIG_RESET_MASK);
 }
