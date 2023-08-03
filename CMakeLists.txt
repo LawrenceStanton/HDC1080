@@ -55,7 +55,7 @@ if(NOT CMAKE_CROSSCOMPILING)
 
 	# GTest Test Executable
 	set(TEST_EXECUTABLE ${LIBRARY}_Test)
-	
+
 	add_executable(${TEST_EXECUTABLE}
 		Test/HDC1080.test.cpp
 	)
@@ -77,7 +77,7 @@ if(NOT CMAKE_CROSSCOMPILING)
 	target_link_options(${TEST_EXECUTABLE} PRIVATE
 		$<$<BOOL:${HDC1080_CODE_COVERAGE}>:--coverage>
 	)
-	
+
 	include(GoogleTest)
 	gtest_discover_tests(${TEST_EXECUTABLE})
 
