@@ -202,17 +202,6 @@ public:
 	) const;
 
 	/**
-	 * @brief Single Configuration Register Set Methods.
-	 *
-	 * @param configParam The desired configuration parameter to set.
-	 * @return std::optional<Register> The written value of the configuration register if successful.
-	 */
-	std::optional<Register> setAcquisitionMode(AcquisitionMode acqMode) const;
-	std::optional<Register> setTemperatureResolution(TemperatureResolution tRes) const;
-	std::optional<Register> setHumidityResolution(HumidityResolution hRes) const;
-	std::optional<Register> setHeater(Heater heater) const;
-
-	/**
 	 * @brief Performs a software reset of the HDC1080.
 	 *
 	 * @return std::optional<Register> The written value of the configuration register if successful.
@@ -261,4 +250,18 @@ private:
 #endif
 };
 
-/*** END OF FILE ***/
+class HDC1080_X : public HDC1080 {
+public:
+	using HDC1080::HDC1080;
+
+	/**
+	 * @brief Single Configuration Register Set Methods.
+	 *
+	 * @param configParam The desired configuration parameter to set.
+	 * @return std::optional<Register> The written value of the configuration register if successful.
+	 */
+	std::optional<Register> setAcquisitionMode(AcquisitionMode acqMode) const;
+	std::optional<Register> setTemperatureResolution(TemperatureResolution tRes) const;
+	std::optional<Register> setHumidityResolution(HumidityResolution hRes) const;
+	std::optional<Register> setHeater(Heater heater) const;
+};

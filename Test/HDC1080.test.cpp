@@ -308,7 +308,17 @@ TEST_F(HDC1080_Test, setConfigReturnsEmptyOptionalWhenI2CFails) {
 	);
 }
 
-TEST_F(HDC1080_Test, setAcquisitionModeNormallySetsValue) {
+TEST_F(HDC1080_Test, softResetReturnsEmptyOptionalWhenI2CFails) {
+	disableI2C();
+	EXPECT_EQ(this->hdc1080.softReset(), nullopt);
+}
+
+class HDC1080_X_Test : public HDC1080_Test {
+public:
+	HDC1080_X hdc1080{i2c};
+};
+
+TEST_F(HDC1080_X_Test, setAcquisitionModeNormallySetsValue) {
 	// Mock changing the config value to SINGLE mode and then back to DUAL mode.
 	const Register configInitialValueDualAcquisitionMode   = 0x1000u;
 	const Register configInitialValueSingleAcquisitionMode = 0x0000u;
@@ -329,12 +339,12 @@ TEST_F(HDC1080_Test, setAcquisitionModeNormallySetsValue) {
 	);
 }
 
-TEST_F(HDC1080_Test, setAcquisitionModeReturnsEmptyOptionalWhenI2CFails) {
+TEST_F(HDC1080_X_Test, setAcquisitionModeReturnsEmptyOptionalWhenI2CFails) {
 	disableI2C();
 	EXPECT_EQ(this->hdc1080.setAcquisitionMode(HDC1080::AcquisitionMode::DUAL), nullopt);
 }
 
-TEST_F(HDC1080_Test, setTemperatureResolutionNormallySetsValue) {
+TEST_F(HDC1080_X_Test, setTemperatureResolutionNormallySetsValue) {
 	// Mock changing the config value to 14-bit resolution and then back to 11-bit resolution.
 	const Register configInitialValue14BitResolution = 0x1000u;
 	const Register configInitialValue11BitResolution = 0x1400u;
@@ -355,12 +365,12 @@ TEST_F(HDC1080_Test, setTemperatureResolutionNormallySetsValue) {
 	);
 }
 
-TEST_F(HDC1080_Test, setTemperatureResolutionReturnsEmptyOptionalWhenI2CFails) {
+TEST_F(HDC1080_X_Test, setTemperatureResolutionReturnsEmptyOptionalWhenI2CFails) {
 	disableI2C();
 	EXPECT_EQ(this->hdc1080.setTemperatureResolution(HDC1080::TemperatureResolution::A_11BIT), nullopt);
 }
 
-TEST_F(HDC1080_Test, setHumidityResolutionNormallySetsValue) {
+TEST_F(HDC1080_X_Test, setHumidityResolutionNormallySetsValue) {
 	// Mock changing the config value to 11-bit resolution, then 8-bit resolution, then 14-bit resolution.
 	const Register configInitialValue14BitResolution = 0x1000u;
 	const Register configInitialValue11BitResolution = 0x1100u;
@@ -386,12 +396,12 @@ TEST_F(HDC1080_Test, setHumidityResolutionNormallySetsValue) {
 	);
 }
 
-TEST_F(HDC1080_Test, setHumidityResolutionReturnsEmptyOptionalWhenI2CFails) {
+TEST_F(HDC1080_X_Test, setHumidityResolutionReturnsEmptyOptionalWhenI2CFails) {
 	disableI2C();
 	EXPECT_EQ(this->hdc1080.setHumidityResolution(HDC1080::HumidityResolution::A_11BIT), nullopt);
 }
 
-TEST_F(HDC1080_Test, setHeaterNormallySetsValue) {
+TEST_F(HDC1080_X_Test, setHeaterNormallySetsValue) {
 	// Mock changing the config value to ON mode and then back to OFF mode.
 	const Register configInitialValueHeaterOn  = 0x3000u;
 	const Register configInitialValueHeaterOff = 0x1000u;
@@ -405,19 +415,14 @@ TEST_F(HDC1080_Test, setHeaterNormallySetsValue) {
 	EXPECT_EQ(this->hdc1080.setHeater(HDC1080::Heater::OFF).value(), configInitialValueHeaterOff);
 }
 
-TEST_F(HDC1080_Test, setHeaterReturnsEmptyOptionalWhenI2CFails) {
+TEST_F(HDC1080_X_Test, setHeaterReturnsEmptyOptionalWhenI2CFails) {
 	disableI2C();
 	EXPECT_EQ(this->hdc1080.setHeater(HDC1080::Heater::ON), nullopt);
 }
 
-TEST_F(HDC1080_Test, softResetNormallySetsValue) {
+TEST_F(HDC1080_X_Test, softResetNormallySetsValue) {
 	const Register configExpectedWriteValue = 0x8000u;
 	EXPECT_CALL(this->i2c, write).WillRepeatedly(ReturnArg<1>());
 
 	EXPECT_EQ(this->hdc1080.softReset().value(), configExpectedWriteValue);
-}
-
-TEST_F(HDC1080_Test, softResetReturnsEmptyOptionalWhenI2CFails) {
-	disableI2C();
-	EXPECT_EQ(this->hdc1080.softReset(), nullopt);
 }

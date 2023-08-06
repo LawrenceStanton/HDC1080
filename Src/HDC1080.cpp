@@ -180,7 +180,8 @@ static Config decodeConfigRegister(Register configRegister) {
 		static_cast<HDC1080::AcquisitionMode>(configRegister & HDC1080_CONFIG_ACQUISITION_MODE_MASK),
 		static_cast<HDC1080::TemperatureResolution>(configRegister & HDC1080_CONFIG_TEMPERATURE_RESOLUTION_MASK),
 		static_cast<HDC1080::HumidityResolution>(configRegister & HDC1080_CONFIG_HUMIDITY_RESOLUTION_MASK),
-		static_cast<HDC1080::Heater>(configRegister & HDC1080_CONFIG_HEATER_MASK)};
+		static_cast<HDC1080::Heater>(configRegister & HDC1080_CONFIG_HEATER_MASK),
+	};
 }
 
 std::optional<Register> HDC1080::setConfig(
@@ -217,22 +218,22 @@ std::optional<Register> HDC1080::setConfig(
 	}
 }
 
-std::optional<Register> HDC1080::setAcquisitionMode(AcquisitionMode acqMode) const {
+std::optional<Register> HDC1080::softReset(void) const {
+	return this->i2c.write(HDC1080_CONFIG_ADDR, HDC1080_CONFIG_RESET_MASK);
+}
+
+std::optional<Register> HDC1080_X::setAcquisitionMode(AcquisitionMode acqMode) const {
 	return setConfig(acqMode, std::nullopt, std::nullopt, std::nullopt);
 }
 
-std::optional<Register> HDC1080::setTemperatureResolution(TemperatureResolution tRes) const {
+std::optional<Register> HDC1080_X::setTemperatureResolution(TemperatureResolution tRes) const {
 	return setConfig(std::nullopt, tRes, std::nullopt, std::nullopt);
 }
 
-std::optional<Register> HDC1080::setHumidityResolution(HumidityResolution hRes) const {
+std::optional<Register> HDC1080_X::setHumidityResolution(HumidityResolution hRes) const {
 	return setConfig(std::nullopt, std::nullopt, hRes, std::nullopt);
 }
 
-std::optional<Register> HDC1080::setHeater(Heater heater) const {
+std::optional<Register> HDC1080_X::setHeater(Heater heater) const {
 	return setConfig(std::nullopt, std::nullopt, std::nullopt, heater);
-}
-
-std::optional<Register> HDC1080::softReset(void) const {
-	return this->i2c.write(HDC1080_CONFIG_ADDR, HDC1080_CONFIG_RESET_MASK);
 }
