@@ -60,9 +60,9 @@
  * 		 It is possible to reduce the delay time by defining shorter conversion times for lower resolution measurements
  * 		 and amending the measurement register getter methods to use these shorter delay times.
  */
-#define HDC1080_CONVERSION_TIME_TEMPERATURE 15u
-#define HDC1080_CONVERSION_TIME_HUMIDITY	15u
-#define HDC1080_CONVERSION_TIME_DUAL		20u
+#define HDC1080_CONVERSION_TIME_TEMPERATURE 15ms
+#define HDC1080_CONVERSION_TIME_HUMIDITY	15ms
+#define HDC1080_CONVERSION_TIME_DUAL		20ms
 
 using Register		= HDC1080::I2C::Register;
 using MemoryAddress = HDC1080::I2C::MemoryAddress;
@@ -143,7 +143,7 @@ std::optional<Register> HDC1080::getHumidityRegister() const {
 }
 
 std::optional<HDC1080::I2C::Register>
-HDC1080::getMeasurementRegister(HDC1080::I2C::MemoryAddress memAddr, uint32_t waitTime) const {
+HDC1080::getMeasurementRegister(HDC1080::I2C::MemoryAddress memAddr, Duration waitTime) const {
 	if (!this->i2c.transmit(static_cast<uint8_t>(memAddr))) return {};
 
 	this->i2c.delay(waitTime);

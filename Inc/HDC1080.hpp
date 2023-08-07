@@ -17,10 +17,14 @@
  */
 #pragma once
 
+#include <chrono>
 #include <cstdint>
 #include <optional>
 
 #define HDC1080_I2C_ADDR 0x40u
+
+using Duration = std::chrono::milliseconds;
+using std::chrono_literals::operator""ms;
 
 class HDC1080 {
 public:
@@ -83,7 +87,7 @@ public:
 		 *
 		 * @param ms The number of milliseconds to delay for.
 		 */
-		virtual void delay(uint32_t ms) const = 0;
+		virtual void delay(Duration duration) const = 0;
 
 		virtual ~I2C() = default;
 	};
@@ -231,7 +235,7 @@ private:
 	 * @param waitTime The measurement conversion delay time in milliseconds.
 	 * @return std::optional<Register> The fetched value of the measurement register if successful.
 	 */
-	std::optional<Register> getMeasurementRegister(MemoryAddress memAddr, uint32_t waitTime = 0) const;
+	std::optional<Register> getMeasurementRegister(MemoryAddress memAddr, Duration waitTime = 0ms) const;
 
 /* Registration for Private Member Testing Purposes Only */
 #ifdef HDC1080_GTEST_TESTING

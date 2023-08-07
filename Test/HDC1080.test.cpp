@@ -100,7 +100,7 @@ public:
 	MOCK_METHOD(std::optional<uint8_t>, transmit, (uint8_t data), (override final));
 	MOCK_METHOD(std::optional<uint8_t>, receive, (), (override final));
 
-	virtual void delay(uint32_t ms) const final {}
+	virtual void delay(Duration ms) const override final {}
 };
 
 class HDC1080_Test : public ::testing::Test {
