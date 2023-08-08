@@ -8,9 +8,11 @@
 
 The HDC1080 is an embedded temperature and humidity sensor, produced by Texas Instruments, and operates over a I2C digital communications interface. This driver provides a simple C++ object-orientated driver to allow for control and data reception from this device, and is agnostic to any embedded platform.
 
-The design philosophy of this driver is comparatively unique in the embedded systems space. The object orientated approach results in a simple, scalable, and extensible driver, which is easy to use and understand. The driver is also designed to be agnostic to any embedded platform, and is therefore portable to any embedded system, with any I2C implementation (see [Design Patterns](#design-patterns)). The system also adopts strong unit testing with the [Google Test](https://google.github.io/googletest/) framework, allowing for a high degree of confidence in the driver's operation and ease of further development. CMake also allows for easy integration into parent projects.
+The design philosophy of this driver is comparatively unique in the embedded systems space. The object orientated approach results in a simple, scalable, and extensible driver, which is easy to use and understand, but respects embedded system limitations and can run on small systems with minimal overhead. The driver is also designed to be agnostic to any embedded platform, and is therefore portable to any embedded system, with any I2C implementation (see [Design Patterns](#design-patterns)). The system also adopts strong unit testing with the [Google Test](https://google.github.io/googletest/) framework, allowing for a high degree of confidence in the driver's operation and ease of further development. CMake also allows for easy integration into parent projects.
 
 ## How to Use
+
+### Use as Git Submodule
 
 1. Add this project as a `git submodule`.
 
@@ -29,11 +31,9 @@ The design philosophy of this driver is comparatively unique in the embedded sys
     )    
     ```
 
-    > If you are not using CMake, you must then simply add the HDC1080 include directory and source files to your chosen build system.
-
 3. Provide an I2C interface when constructing the driver. Refer to [Design Patterns](#design-patterns) below and [HDC1080.hpp](Inc/HDC1080.hpp) for more information.
 
-4. Construct the HDC1080 I2C interface and class object.
+4. Construct the derived HDC1080 I2C interface and class object.
 
     ```cpp
     // Construct the I2C interface
@@ -43,6 +43,8 @@ The design philosophy of this driver is comparatively unique in the embedded sys
     ```
 
 ## Design Patterns
+
+> [!IMPORTANT]
 
 This driver follows an [Strategy Design Pattern](https://en.wikipedia.org/wiki/Strategy_pattern) with regards to the I2C communication. The driver defines an I2C interface (`HDC1080::I2C`). The user must then provide a concrete implementation of this interface, and provide it to the driver class.
 
