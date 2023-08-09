@@ -18,6 +18,8 @@
 
 #include "HDC1080.hpp"
 
+using namespace units::literals;
+
 #define HDC1080_MEM_SIZE 2u
 
 /* Register Addresses */
@@ -69,34 +71,34 @@ using MemoryAddress = HDC1080::I2C::MemoryAddress;
 
 HDC1080::HDC1080(I2C &i2c) : i2c{i2c} {}
 
-/* Floating Point Measurement Conversion Methods */
+/* Measurement Conversion Methods */
 /**
- * @brief Get the temperature measurement in degrees Celsius, given the register value.
+ * @brief Get the temperature measurement, given the register value.
  *
- * @return float The temperature measurement.
+ * @return The temperature measurement in degrees Celsius.
  */
-static float constexpr convertTemperature(Register temperatureRegister) {
-	return static_cast<float>(temperatureRegister * (165.0 / 65536.0) - 40.0); // Refer to HDC1080 datasheet for formula
+static Celsius constexpr convertTemperature(Register temperatureRegister) {
+	return Celsius(temperatureRegister * (165.0f / 65536.0f) - 40.0f); // Refer to HDC1080 datasheet for formula
 }
 
 /**
- * @brief Get the humidity measurement in percent relative humidity, given the register value.
+ * @brief Get the humidity measurement, given the register value.
  *
- * @return float The humidity measurement in percent relative humidity.
+ * @return The percent relative humidity.
  */
-static float convertHumidity(Register humidityRegister) {
-	return static_cast<float>(humidityRegister * (25.0 / 16384.0)); // Refer to HDC1080 datasheet for formula
+static RelativeHumidity convertHumidity(Register humidityRegister) {
+	return RelativeHumidity(humidityRegister * (25.0f / 16384.0f) * 100); // Refer to HDC1080 datasheet for formula
 }
 
-float HDC1080::getTemperature() const {
+Celsius HDC1080::getTemperature() const {
 	auto temperatureRegister = getTemperatureRegister();
 
 	if (temperatureRegister.has_value()) return convertTemperature(temperatureRegister.value());
 
-	return -40.0;
+	return -40.0_degC;
 }
 
-float HDC1080::getHumidity() const {
+RelativeHumidity HDC1080::getHumidity() const {
 	auto humidityRegister = getHumidityRegister();
 
 	if (humidityRegister.has_value()) return convertHumidity(humidityRegister.value());

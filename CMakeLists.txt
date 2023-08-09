@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 3.24...3.27)
 
 project(HDC1080)
 
@@ -17,6 +17,30 @@ target_include_directories(${LIBRARY} PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}/Inc
 )
 
+# Fetch units library
+
+include(FetchContent)
+FetchContent_Declare(
+	units
+	GIT_REPOSITORY https://github.com/nholthaus/units
+	GIT_TAG origin/master
+)
+
+set(DISABLE_IOSTREAM ON CACHE BOOL "" FORCE)
+
+set(CMAKE_WARN_DEPRECATED FALSE CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(units)
+set(CMAKE_WARN_DEPRECATED TRUE CACHE BOOL "" FORCE)
+
+target_link_libraries(${LIBRARY} PUBLIC
+	units::units
+)
+
+add_custom_command(TARGET ${LIBRARY} POST_BUILD
+	COMMENT "Generating ${LIBRARY} Disassembly"
+	COMMAND ${CMAKE_OBJDUMP} -D -C $<TARGET_FILE:${LIBRARY}> > ${LIBRARY}.s
+)
+
 add_library(${LIBRARY}::${LIBRARY} ALIAS ${LIBRARY})
 
 if(NOT CMAKE_CROSSCOMPILING)
@@ -26,8 +50,6 @@ if(NOT CMAKE_CROSSCOMPILING)
 	if(HDC1080_AUTOFETCH_GTEST)
 		if(NOT TARGET GTest::gtest OR NOT TARGET GTest::gmock)
 			message(STATUS "GTest not found. Fetching...")
-
-			include(FetchContent)
 			FetchContent_Declare(
 				googletest
 				GIT_REPOSITORY https://github.com/google/googletest

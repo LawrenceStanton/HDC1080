@@ -11,7 +11,7 @@
 
 #define HDC1080_GTEST_TESTING
 
-#include "HDC1080.hpp"
+// #include "HDC1080.hpp"
 
 #include "../Src/HDC1080.cpp" // For static helper functions.
 
@@ -28,9 +28,9 @@ using Register		= HDC1080::I2C::Register;
 // Tests of Static Functions
 
 TEST(HDC1080_TestStatic, getTemperatureStaticImplementsExpectedEquation) {
-	EXPECT_FLOAT_EQ(convertTemperature(0x0000u), -40.0);
-	EXPECT_FLOAT_EQ(convertTemperature(0x1234u), -28.26751);
-	EXPECT_FLOAT_EQ(convertTemperature(0xFFFFu), 124.99748);
+	EXPECT_FLOAT_EQ(convertTemperature(0x0000u).value(), -40.0);
+	EXPECT_FLOAT_EQ(convertTemperature(0x1234u).value(), -28.26751);
+	EXPECT_FLOAT_EQ(convertTemperature(0xFFFFu).value(), 124.99748);
 }
 
 TEST(HDC1080_TestStatic, getHumidityStaticImplementsExpectedEquation) {
@@ -129,7 +129,7 @@ TEST_F(HDC1080_Test, getTemperatureRegisterNormallyReturnsValue) {
 
 TEST_F(HDC1080_Test, getTemperatureReturnsMinusFortyWhenGetTemperatureRegisterFails) {
 	disableI2C();
-	EXPECT_FLOAT_EQ(this->hdc1080.getTemperature(), -40.0);
+	EXPECT_FLOAT_EQ(this->hdc1080.getTemperature().value(), -40.0);
 }
 
 TEST_F(HDC1080_Test, getTemperatureRegisterReturnsEmptyOptionalWhenI2CFails) {
@@ -141,7 +141,7 @@ TEST_F(HDC1080_Test, getTemperatureReturnsUpdatedValue) {
 	EXPECT_CALL(this->i2c, transmit(_)).WillRepeatedly(ReturnArg<0>());
 	EXPECT_CALL(this->i2c, receive()).WillOnce(Return(0xABu)).WillOnce(Return(0xCDu));
 
-	EXPECT_FLOAT_EQ(this->hdc1080.getTemperature(), convertTemperature(0xABCDu));
+	EXPECT_FLOAT_EQ(this->hdc1080.getTemperature().value(), convertTemperature(0xABCDu).value());
 }
 
 TEST_F(HDC1080_Test, getHumidityRegisterNormallyReturnsValue) {

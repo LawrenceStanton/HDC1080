@@ -21,6 +21,11 @@
 #include <cstdint>
 #include <optional>
 
+#include "units.h"
+
+using Celsius		   = units::temperature::celsius_t;
+using RelativeHumidity = units::concentration::percent_t;
+
 #define HDC1080_I2C_ADDR 0x40u
 
 using Duration = std::chrono::milliseconds;
@@ -140,7 +145,7 @@ public:
 	 *
 	 * @note In the event of I2C failure, this results in T = -40.0.
 	 */
-	float getTemperature() const;
+	Celsius getTemperature() const;
 
 	/**
 	 * @brief Get the Humidity from the HDC1080.
@@ -149,7 +154,7 @@ public:
 	 *
 	 * @note In the event of I2C failure, this results in H = 0.0.
 	 */
-	float getHumidity() const;
+	RelativeHumidity getHumidity() const;
 
 	/* Other Device Information Get Methods */
 	/**
