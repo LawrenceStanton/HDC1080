@@ -95,12 +95,12 @@ TEST(HDC1080_TestStatic, decodeConfigRegisterRandomChecks) {
 
 class MockedI2C : public HDC1080::I2C {
 public:
-	MOCK_METHOD(std::optional<Register>, read, (MemoryAddress addr), (override final));
-	MOCK_METHOD(std::optional<Register>, write, (MemoryAddress addr, Register data), (override final));
-	MOCK_METHOD(std::optional<uint8_t>, transmit, (uint8_t data), (override final));
-	MOCK_METHOD(std::optional<uint8_t>, receive, (), (override final));
+	MOCK_METHOD(std::optional<Register>, read, (MemoryAddress addr), (noexcept, override, final));
+	MOCK_METHOD(std::optional<Register>, write, (MemoryAddress addr, Register data), (noexcept, override, final));
+	MOCK_METHOD(std::optional<uint8_t>, transmit, (uint8_t data), (noexcept, override, final));
+	MOCK_METHOD(std::optional<uint8_t>, receive, (), (override, final, noexcept));
 
-	virtual void delay(Duration ms) const override final {}
+	virtual void delay(Duration ms) const noexcept override final {}
 };
 
 class HDC1080_Test : public ::testing::Test {
@@ -127,21 +127,9 @@ TEST_F(HDC1080_Test, getTemperatureRegisterNormallyReturnsValue) {
 	EXPECT_EQ(this->hdc1080.getTemperatureRegister().value(), 0x1234u);
 }
 
-TEST_F(HDC1080_Test, getTemperatureReturnsMinusFortyWhenGetTemperatureRegisterFails) {
-	disableI2C();
-	EXPECT_FLOAT_EQ(this->hdc1080.getTemperature().value(), -40.0);
-}
-
 TEST_F(HDC1080_Test, getTemperatureRegisterReturnsEmptyOptionalWhenI2CFails) {
 	disableI2C();
 	EXPECT_EQ(this->hdc1080.getTemperatureRegister(), nullopt);
-}
-
-TEST_F(HDC1080_Test, getTemperatureReturnsUpdatedValue) {
-	EXPECT_CALL(this->i2c, transmit(_)).WillRepeatedly(ReturnArg<0>());
-	EXPECT_CALL(this->i2c, receive()).WillOnce(Return(0xABu)).WillOnce(Return(0xCDu));
-
-	EXPECT_FLOAT_EQ(this->hdc1080.getTemperature().value(), convertTemperature(0xABCDu).value());
 }
 
 TEST_F(HDC1080_Test, getHumidityRegisterNormallyReturnsValue) {
@@ -149,18 +137,6 @@ TEST_F(HDC1080_Test, getHumidityRegisterNormallyReturnsValue) {
 	EXPECT_CALL(this->i2c, receive()).WillOnce(Return(0x12u)).WillOnce(Return(0x34u));
 
 	EXPECT_EQ(this->hdc1080.getHumidityRegister().value(), 0x1234u);
-}
-
-TEST_F(HDC1080_Test, getHumidityReturnsZeroWhenI2CReceiveFails) {
-	disableI2C();
-	EXPECT_FLOAT_EQ(this->hdc1080.getHumidity(), 0.0);
-}
-
-TEST_F(HDC1080_Test, getHumidityReturnsUpdatedValue) {
-	EXPECT_CALL(this->i2c, transmit(_)).WillRepeatedly(ReturnArg<0>());
-	EXPECT_CALL(this->i2c, receive()).WillOnce(Return(0xABu)).WillOnce(Return(0xCDu));
-
-	EXPECT_FLOAT_EQ(this->hdc1080.getHumidity(), convertHumidity(0xABCDu));
 }
 
 TEST_F(HDC1080_Test, getHumidityRegisterReturnsEmptyOptionalWhenI2CReceiveFails) {
@@ -317,6 +293,30 @@ class HDC1080_X_Test : public HDC1080_Test {
 public:
 	HDC1080_X hdc1080{i2c};
 };
+
+TEST_F(HDC1080_X_Test, getTemperatureNormallyReturnsValue) {
+	EXPECT_CALL(this->i2c, transmit(_)).WillRepeatedly(ReturnArg<0>());
+	EXPECT_CALL(this->i2c, receive()).WillOnce(Return(0xABu)).WillOnce(Return(0xCDu));
+
+	EXPECT_FLOAT_EQ(this->hdc1080.getTemperature().value(), convertTemperature(0xABCDu).value());
+}
+
+TEST_F(HDC1080_X_Test, getTemperatureReturnsMinusFortyWhenGetTemperatureRegisterFails) {
+	disableI2C();
+	EXPECT_FLOAT_EQ(this->hdc1080.getTemperature().value(), -40.0);
+}
+
+TEST_F(HDC1080_X_Test, getHumidityNormallyReturnsValue) {
+	EXPECT_CALL(this->i2c, transmit(_)).WillRepeatedly(ReturnArg<0>());
+	EXPECT_CALL(this->i2c, receive()).WillOnce(Return(0xABu)).WillOnce(Return(0xCDu));
+
+	EXPECT_FLOAT_EQ(this->hdc1080.getHumidity(), convertHumidity(0xABCDu));
+}
+
+TEST_F(HDC1080_X_Test, getHumidityReturnsZeroWhenI2CReceiveFails) {
+	disableI2C();
+	EXPECT_FLOAT_EQ(this->hdc1080.getHumidity(), 0.0);
+}
 
 TEST_F(HDC1080_X_Test, setAcquisitionModeNormallySetsValue) {
 	// Mock changing the config value to SINGLE mode and then back to DUAL mode.

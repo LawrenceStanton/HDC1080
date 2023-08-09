@@ -71,50 +71,23 @@ using MemoryAddress = HDC1080::I2C::MemoryAddress;
 
 HDC1080::HDC1080(I2C &i2c) : i2c{i2c} {}
 
-/* Measurement Conversion Methods */
-/**
- * @brief Get the temperature measurement, given the register value.
- *
- * @return The temperature measurement in degrees Celsius.
- */
-static Celsius constexpr convertTemperature(Register temperatureRegister) {
-	return Celsius(temperatureRegister * (165.0f / 65536.0f) - 40.0f); // Refer to HDC1080 datasheet for formula
+std::optional<Register> HDC1080::getTemperatureRegister(void) const {
+	return getMeasurementRegister(HDC1080_TEMPERATURE_ADDR, HDC1080_CONVERSION_TIME_TEMPERATURE);
 }
 
-/**
- * @brief Get the humidity measurement, given the register value.
- *
- * @return The percent relative humidity.
- */
-static RelativeHumidity convertHumidity(Register humidityRegister) {
-	return RelativeHumidity(humidityRegister * (25.0f / 16384.0f) * 100); // Refer to HDC1080 datasheet for formula
+std::optional<Register> HDC1080::getHumidityRegister(void) const {
+	return getMeasurementRegister(HDC1080_HUMIDITY_ADDR, HDC1080_CONVERSION_TIME_HUMIDITY);
 }
 
-Celsius HDC1080::getTemperature() const {
-	auto temperatureRegister = getTemperatureRegister();
-
-	if (temperatureRegister.has_value()) return convertTemperature(temperatureRegister.value());
-
-	return -40.0_degC;
-}
-
-RelativeHumidity HDC1080::getHumidity() const {
-	auto humidityRegister = getHumidityRegister();
-
-	if (humidityRegister.has_value()) return convertHumidity(humidityRegister.value());
-
-	return 0.0;
-}
-
-std::optional<Register> HDC1080::getDeviceID() const {
+std::optional<Register> HDC1080::getDeviceID(void) const {
 	return this->i2c.read(HDC1080_DEVICE_ID_ADDR);
 }
 
-std::optional<uint16_t> HDC1080::getManufacturerID() const {
+std::optional<uint16_t> HDC1080::getManufacturerID(void) const {
 	return this->i2c.read(HDC1080_MANUFACTURER_ID_ADDR);
 }
 
-std::optional<uint64_t> HDC1080::getSerialID() const {
+std::optional<uint64_t> HDC1080::getSerialID(void) const {
 	Register serialID[3];
 	for (unsigned int i = 0; i < 3; i++) {
 		auto transmission = this->i2c.read(HDC1080_SERIAL_ID_ADDR + i);
@@ -128,20 +101,12 @@ std::optional<uint64_t> HDC1080::getSerialID() const {
 	return serialIdValue;
 }
 
-std::optional<HDC1080::Battery> HDC1080::getBatteryStatus() const {
+std::optional<HDC1080::Battery> HDC1080::getBatteryStatus(void) const {
 	auto transmission = this->i2c.read(HDC1080_CONFIG_ADDR);
 
 	if (transmission.has_value())
 		return static_cast<HDC1080::Battery>(!(transmission.value() & HDC1080_CONFIG_BATTERY_STATUS_MASK));
 	else return std::nullopt;
-}
-
-std::optional<Register> HDC1080::getTemperatureRegister() const {
-	return getMeasurementRegister(HDC1080_TEMPERATURE_ADDR, HDC1080_CONVERSION_TIME_TEMPERATURE);
-}
-
-std::optional<Register> HDC1080::getHumidityRegister() const {
-	return getMeasurementRegister(HDC1080_HUMIDITY_ADDR, HDC1080_CONVERSION_TIME_HUMIDITY);
 }
 
 std::optional<HDC1080::I2C::Register>
@@ -222,6 +187,41 @@ std::optional<Register> HDC1080::setConfig(
 
 std::optional<Register> HDC1080::softReset(void) const {
 	return this->i2c.write(HDC1080_CONFIG_ADDR, HDC1080_CONFIG_RESET_MASK);
+}
+
+/* Measurement Conversion Methods */
+/**
+ * @brief Get the temperature measurement, given the register value.
+ *
+ * @return The temperature measurement in degrees Celsius.
+ */
+static Celsius constexpr convertTemperature(Register temperatureRegister) {
+	return Celsius(temperatureRegister * (165.0f / 65536.0f) - 40.0f); // Refer to HDC1080 datasheet for formula
+}
+
+/**
+ * @brief Get the humidity measurement, given the register value.
+ *
+ * @return The percent relative humidity.
+ */
+static RelativeHumidity convertHumidity(Register humidityRegister) {
+	return RelativeHumidity(humidityRegister * (25.0f / 16384.0f) * 100); // Refer to HDC1080 datasheet for formula
+}
+
+Celsius HDC1080_X::getTemperature(void) const {
+	auto temperatureRegister = getTemperatureRegister();
+
+	if (temperatureRegister.has_value()) return convertTemperature(temperatureRegister.value());
+
+	return -40.0_degC;
+}
+
+RelativeHumidity HDC1080_X::getHumidity(void) const {
+	auto humidityRegister = getHumidityRegister();
+
+	if (humidityRegister.has_value()) return convertHumidity(humidityRegister.value());
+
+	return 0.0;
 }
 
 std::optional<Register> HDC1080_X::setAcquisitionMode(AcquisitionMode acqMode) const {

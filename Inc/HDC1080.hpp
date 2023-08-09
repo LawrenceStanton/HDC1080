@@ -55,7 +55,8 @@ public:
 		 * @param memoryAddress The HDC1080 internal memory address of the register to read.
 		 * @return std::optional<Register> The value of the register if the read was successful.
 		 */
-		virtual std::optional<Register> read(MemoryAddress memoryAddress)				  = 0;
+		virtual std::optional<Register> read(MemoryAddress memoryAddress) noexcept = 0;
+
 		/**
 		 * @brief Write a register to the HDC1080.
 		 *
@@ -63,7 +64,7 @@ public:
 		 * @param data The data to write to the register.
 		 * @return std::optional<Register> The value written to the register if the write was successful.
 		 */
-		virtual std::optional<Register> write(MemoryAddress memoryAddress, Register data) = 0;
+		virtual std::optional<Register> write(MemoryAddress memoryAddress, Register data) noexcept = 0;
 
 		/**
 		 * @brief Transmit a byte of data to the HDC1080.
@@ -74,7 +75,8 @@ public:
 		 * @note This function is normally used to get measurement data from the HDC1080, where some measurement
 		 * delays are necessary, and therefore this driver will assume implementation of the I2C protocol.
 		 */
-		virtual std::optional<uint8_t> transmit(uint8_t data) = 0;
+		virtual std::optional<uint8_t> transmit(uint8_t data) noexcept = 0;
+
 		/**
 		 * @brief Receive a byte of data from the HDC1080.
 		 *
@@ -83,7 +85,7 @@ public:
 		 * @note This function is normally used to get measurement data from the HDC1080, where some measurement
 		 * delays are necessary, and therefore this driver will assume implementation of the I2C protocol.
 		 */
-		virtual std::optional<uint8_t> receive(void)		  = 0;
+		virtual std::optional<uint8_t> receive(void) noexcept = 0;
 
 		/**
 		 * @brief Delay for a given number of milliseconds.
@@ -92,7 +94,7 @@ public:
 		 *
 		 * @param ms The number of milliseconds to delay for.
 		 */
-		virtual void delay(Duration duration) const = 0;
+		virtual void delay(Duration duration) const noexcept = 0;
 
 		virtual ~I2C() = default;
 	};
@@ -139,22 +141,18 @@ public:
 	HDC1080(I2C &i2c);
 
 	/**
-	 * @brief Get the Temperature from the HDC1080.
+	 * @brief Get the Temperature Register
 	 *
-	 * @return float The temperature measurement in degrees Celsius.
-	 *
-	 * @note In the event of I2C failure, this results in T = -40.0.
+	 * @return std::optional<Register> The fetched value of the temperature register if successful.
 	 */
-	Celsius getTemperature() const;
+	std::optional<Register> getTemperatureRegister(void) const;
 
 	/**
-	 * @brief Get the Humidity from the HDC1080.
+	 * @brief Get the Humidity Register
 	 *
-	 * @return float The humidity measurement in percent relative humidity.
-	 *
-	 * @note In the event of I2C failure, this results in H = 0.0.
+	 * @return std::optional<Register> The fetched value of the humidity register if successful.
 	 */
-	RelativeHumidity getHumidity() const;
+	std::optional<Register> getHumidityRegister(void) const;
 
 	/* Other Device Information Get Methods */
 	/**
@@ -162,14 +160,14 @@ public:
 	 *
 	 * @return std::optional<Register> 0x1050 if successful.
 	 */
-	std::optional<Register> getDeviceID() const;
+	std::optional<Register> getDeviceID(void) const;
 
 	/**
 	 * @brief Get the Manufacturer ID of the HDC1080.
 	 *
 	 * @return std::optional<uint16_t> 0x5449 if successful.
 	 */
-	std::optional<uint16_t> getManufacturerID() const;
+	std::optional<uint16_t> getManufacturerID(void) const;
 
 	/**
 	 * @brief Get the Serial ID of the HDC1080.
@@ -180,14 +178,14 @@ public:
 	 * 		 This driver will assume the register map is correct.
 	 * @note Unused bits are set to 0.
 	 */
-	std::optional<uint64_t> getSerialID() const;
+	std::optional<uint64_t> getSerialID(void) const;
 
 	/**
 	 * @brief Get the Battery Status of the HDC1080.
 	 *
 	 * @return std::optional<bool> True if the supply voltage greater than 2V8, false if less than 2V8.
 	 */
-	std::optional<Battery> getBatteryStatus() const;
+	std::optional<Battery> getBatteryStatus(void) const;
 
 	/**
 	 * @brief Sets the HDC1080 Configuration Register given all programmable settings.
@@ -218,21 +216,7 @@ public:
 	 */
 	std::optional<Register> softReset(void) const;
 
-private:
-	/**
-	 * @brief Get the Temperature Register
-	 *
-	 * @return std::optional<Register> The fetched value of the temperature register if successful.
-	 */
-	inline std::optional<Register> getTemperatureRegister() const;
-
-	/**
-	 * @brief Get the Humidity Register
-	 *
-	 * @return std::optional<Register> The fetched value of the humidity register if successful.
-	 */
-	inline std::optional<Register> getHumidityRegister() const;
-
+protected:
 	/**
 	 * @brief Get a Measurement Register from the HDC1080.
 	 *
@@ -259,15 +243,39 @@ private:
 #endif
 };
 
+/**
+ * @brief Derived class of HDC1080 that provides additional functionality.
+ * @warning
+ * This class introduces types that might not be compatible with some embedded systems.
+ * Some methods might be computationally expensive or otherwise expensive.
+ */
 class HDC1080_X : public HDC1080 {
 public:
 	using HDC1080::HDC1080;
 
 	/**
+	 * @brief Get the Temperature from the HDC1080.
+	 *
+	 * @return float The temperature measurement in degrees Celsius.
+	 *
+	 * @note In the event of I2C failure, this results in T = -40.0.
+	 */
+	Celsius getTemperature(void) const;
+
+	/**
+	 * @brief Get the Humidity from the HDC1080.
+	 *
+	 * @return float The humidity measurement in percent relative humidity.
+	 *
+	 * @note In the event of I2C failure, this results in H = 0.0.
+	 */
+	RelativeHumidity getHumidity(void) const;
+
+	/**
 	 * @brief Single Configuration Register Set Methods.
 	 *
 	 * @param configParam The desired configuration parameter to set.
-	 * @return std::optional<Register> The written value of the configuration register if successful.
+	 * @return The written value of the configuration register if successful.
 	 */
 	std::optional<Register> setAcquisitionMode(AcquisitionMode acqMode) const;
 	std::optional<Register> setTemperatureResolution(TemperatureResolution tRes) const;
