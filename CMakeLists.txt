@@ -6,8 +6,12 @@ set(LIBRARY ${PROJECT_NAME})
 
 enable_language(CXX)
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON) # Requires std::optional in C++17, default comparisons in C++20.
+if(NOT CMAKE_CROSSCOMPILING)
+set(CMAKE_CXX_STANDARD 20) # Requires default comparisons in C++20 (testing only)
+else()
+set(CMAKE_CXX_STANDARD 17) # Requires std::optional in C++17
+endif()
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(${LIBRARY} STATIC
 	Src/HDC1080.cpp
@@ -16,8 +20,6 @@ add_library(${LIBRARY} STATIC
 target_include_directories(${LIBRARY} PUBLIC
 	${CMAKE_CURRENT_SOURCE_DIR}/Inc
 )
-
-# Fetch units library
 
 include(FetchContent)
 FetchContent_Declare(
@@ -28,7 +30,7 @@ FetchContent_Declare(
 
 set(DISABLE_IOSTREAM ON CACHE BOOL "" FORCE)
 
-set(CMAKE_WARN_DEPRECATED FALSE CACHE BOOL "" FORCE)
+set(CMAKE_WARN_DEPRECATED FALSE CACHE BOOL "" FORCE)	# Workaround for units library deprecation warnings. PR: https://github.com/nholthaus/units/pull/320
 FetchContent_MakeAvailable(units)
 set(CMAKE_WARN_DEPRECATED TRUE CACHE BOOL "" FORCE)
 
@@ -37,7 +39,7 @@ target_link_libraries(${LIBRARY} PUBLIC
 )
 
 add_custom_command(TARGET ${LIBRARY} POST_BUILD
-	COMMENT "Generating ${LIBRARY} Disassembly"
+	COMMENT "Generating ${LIBRARY} Disassembly..."
 	COMMAND ${CMAKE_OBJDUMP} -D -C $<TARGET_FILE:${LIBRARY}> > ${LIBRARY}.s
 )
 
@@ -45,24 +47,17 @@ add_library(${LIBRARY}::${LIBRARY} ALIAS ${LIBRARY})
 
 if(NOT CMAKE_CROSSCOMPILING)
 	option(HDC1080_CODE_COVERAGE "Enable gcovr code coverage for HDC1080" OFF)
-	option(HDC1080_AUTOFETCH_GTEST "Automatically fetch GTest if not included by parent." ON)
 
-	if(HDC1080_AUTOFETCH_GTEST)
-		if(NOT TARGET GTest::gtest OR NOT TARGET GTest::gmock)
-			message(STATUS "GTest not found. Fetching...")
-			FetchContent_Declare(
-				googletest
-				GIT_REPOSITORY https://github.com/google/googletest
-				GIT_TAG origin/main
-			)
-			set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-			FetchContent_MakeAvailable(googletest)
+	FetchContent_Declare(
+		googletest
+		GIT_REPOSITORY https://github.com/google/googletest
+		GIT_TAG origin/main
+	)
+	set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+	FetchContent_MakeAvailable(googletest)
+	enable_testing()
 
-			enable_testing()
-		endif()
-	endif()
 
-	# Add addittional configuration to library target.
 	target_link_libraries(${LIBRARY} PRIVATE
 		GTest::gtest
 	)
@@ -75,7 +70,6 @@ if(NOT CMAKE_CROSSCOMPILING)
 		$<$<BOOL:${HDC1080_CODE_COVERAGE}>:--coverage>
 	)
 
-	# GTest Test Executable
 	set(TEST_EXECUTABLE ${LIBRARY}_Test)
 
 	add_executable(${TEST_EXECUTABLE}
