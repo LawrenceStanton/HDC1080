@@ -44,7 +44,38 @@ The design philosophy of this driver is comparatively unique in the embedded sys
 
 ## Design Patterns
 
-This driver follows an [Strategy Design Pattern](https://en.wikipedia.org/wiki/Strategy_pattern) with regards to the I2C communication. The driver defines an I2C interface (`HDC1080::I2C`). The user must then provide a concrete implementation of this interface, and provide it to the driver class.
+This driver follows an [Strategy Design Pattern](https://en.wikipedia.org/wiki/Strategy_pattern) with regards to I2C communication. The driver defines an I2C interface (`HDC1080::I2C`). The user must then provide a concrete implementation of this interface, and provide it to the driver class.
+
+```mermaid
+classDiagram
+    class HDC1080{
+        + class I2C
+        # I2C &i2c
+        + HDC1080(I2C &i2c)
+    }
+    class `HDC1080::I2C`{
+        <<Interface>>
+        + read(MemoryAddress address)*
+        + write(MemoryAddress address, Register data)*
+        + transmit(uint8_t data)*
+        + receive(void)*
+        + delay(Duration ms)*
+    }
+    class MyI2C{
+        + MyI2C(MyI2CParams params)
+        + read(MemoryAddress address)
+        + write(MemoryAddress address, Register data)
+        + transmit(uint8_t data)
+        + receive(void)
+        + delay(Duration ms)
+
+    }
+
+    MyI2C <|.. `HDC1080::I2C`
+    HDC1080 -- `HDC1080::I2C`
+    HDC1080 o-- MyI2C
+    
+```
 
 Often a concrete implementation will simply translate the I2C operations to the embedded platform's Hardware Abstraction Layer (HAL). For example, the [STM32Cube HAL](https://www.st.com/en/embedded-software/stm32cube-mcu-mpu-packages.html) provides an I2C interface, which can be used to implement the I2C operations. However, the user may also provide their own low level implementation, which may be useful in some applications, or mocked implementation, which may be useful for testing purposes (see [Testing](#testing)).
 
@@ -60,11 +91,11 @@ public:
     MyI2C(MyI2CParams params) : params(params) {}
     virtual ~MyI2C() {}
 
-    virtual std::optional<HDC1080::I2C::Register> read(HDC1080::I2C::MemoryAddress address) override;
-    virtual std::optional<HDC1080::I2C::Register> write(HDC1080::I2C::MemoryAddress address, HDC1080::I2C::Register) override;
-    virtual std::optional<uint8_t> transmit(uint8_t data) override;
-    virtual std::optional<uint8_t> receive() override;
-    virtual void delay(uint32_t ms) override;
+    virtual std::optional<HDC1080::I2C::Register> read(HDC1080::I2C::MemoryAddress address) noexcept override final;
+    virtual std::optional<HDC1080::I2C::Register> write(HDC1080::I2C::MemoryAddress address, HDC1080::I2C::Register) noexcept override final;
+    virtual std::optional<uint8_t> transmit(uint8_t data) noexcept override final;
+    virtual std::optional<uint8_t> receive() noexcept override final;
+    virtual void delay(Delay delay) const noexcept override final;
 }
 
 // Definitions made in a separate source file.
