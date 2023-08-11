@@ -75,6 +75,7 @@ classDiagram
     MyI2C <|.. `HDC1080::I2C`
     HDC1080 -- `HDC1080::I2C`
     HDC1080 o-- MyI2C
+    HDC1080_X --|> HDC1080
 ```
 
 Often a concrete implementation will simply translate the I2C operations to the embedded platform's Hardware Abstraction Layer (HAL). For example, the [STM32Cube HAL](https://www.st.com/en/embedded-software/stm32cube-mcu-mpu-packages.html) provides an I2C interface, which can be used to implement the I2C operations. However, the user may also provide their own low level implementation, which may be useful in some applications, or mocked implementation, which may be useful for testing purposes (see [Testing](#testing)).
@@ -102,6 +103,15 @@ public:
 ```
 
 Refer to [Examples] for concrete examples of this design pattern.
+
+## Extended Class
+
+The class `HDC1080_X` adds additional functionality and convenience functions, but performs less efficient communication and introduces dependency on floating point operations.
+
+Use this class when:
+
+- Infrequently interacting with the HDC1080.
+- Running on a CPU with a hardware floating point unit.
 
 ## Testing
 
