@@ -48,6 +48,7 @@ This driver follows an [Strategy Design Pattern](https://en.wikipedia.org/wiki/S
 
 ```mermaid
 classDiagram
+    direction LR
     class HDC1080{
         + class I2C
         # I2C &i2c
@@ -74,7 +75,6 @@ classDiagram
     MyI2C <|.. `HDC1080::I2C`
     HDC1080 -- `HDC1080::I2C`
     HDC1080 o-- MyI2C
-    
 ```
 
 Often a concrete implementation will simply translate the I2C operations to the embedded platform's Hardware Abstraction Layer (HAL). For example, the [STM32Cube HAL](https://www.st.com/en/embedded-software/stm32cube-mcu-mpu-packages.html) provides an I2C interface, which can be used to implement the I2C operations. However, the user may also provide their own low level implementation, which may be useful in some applications, or mocked implementation, which may be useful for testing purposes (see [Testing](#testing)).
