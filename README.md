@@ -44,7 +44,7 @@ The design philosophy of this driver is comparatively unique in the embedded sys
 
 ## Design Patterns
 
-This driver follows an [Strategy Design Pattern](https://en.wikipedia.org/wiki/Strategy_pattern) with regards to I2C communication. The driver defines an I2C interface (`HDC1080::I2C`). The user must then provide a concrete implementation of this interface, and provide it to the driver class.
+This driver follows an [Strategy Design Pattern](https://en.wikipedia.org/wiki/Strategy_pattern) with regards to I2C communication. The driver defines a I2C interface (`HDC1080::I2C`). The user must then provide a concrete implementation of this interface, and provide it to the driver class.
 
 ```mermaid
 classDiagram
@@ -118,22 +118,6 @@ Use this class when:
 This driver is unit tested using the GoogleTest and GoogleMock frameworks. The tests are located in the [Tests](Tests) directory.
 
 The tests are built using CMake. Given the limitations of many embedded systems, the tests are designed to be run on a host machine, and not on the embedded system itself. This is done by checking the CMake variable `CMAKE_CROSSCOMPILING` and only building the tests if this is false. To build the tests, configure your build presets to perform a local build.
-
-> If gtest and gmock are not installed on your system, CMake will attempt to download and build them automatically with FetchContent. Disable this behaviour by setting the CMake option `HDC1080_AUTOFETCH_GTEST` to `OFF`.
->
-> _Command Line:_
->
->```zsh
->cmake -DHDC1080_AUTOFETCH_GTEST=OFF
->```
->
-> _Parent CMakeLists.txt:_
->
-> ```cmake
-> set(HDC1080_AUTOFETCH_GTEST OFF)
-> # ...
-> add_subdirectory(Modules/HDC1080)
->```
 
 The tests can then be run using CTest.
 
