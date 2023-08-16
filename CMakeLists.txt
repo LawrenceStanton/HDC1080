@@ -57,19 +57,6 @@ if(NOT CMAKE_CROSSCOMPILING)
 	FetchContent_MakeAvailable(googletest)
 	enable_testing()
 
-
-	target_link_libraries(${LIBRARY} PRIVATE
-		GTest::gtest
-	)
-
-	target_compile_options(${LIBRARY} PRIVATE
-		$<$<BOOL:${HDC1080_CODE_COVERAGE}>:--coverage>
-	)
-
-	target_link_options(${LIBRARY} PRIVATE
-		$<$<BOOL:${HDC1080_CODE_COVERAGE}>:--coverage>
-	)
-
 	set(TEST_EXECUTABLE ${LIBRARY}_Test)
 
 	add_executable(${TEST_EXECUTABLE}
@@ -78,10 +65,6 @@ if(NOT CMAKE_CROSSCOMPILING)
 
 	target_compile_options(${TEST_EXECUTABLE} PRIVATE
 		$<$<BOOL:${HDC1080_CODE_COVERAGE}>:--coverage>
-	)
-
-	target_include_directories(${TEST_EXECUTABLE} PUBLIC
-		${CMAKE_CURRENT_SOURCE_DIR}/Inc
 	)
 
 	target_link_libraries(${TEST_EXECUTABLE} PRIVATE
