@@ -16,6 +16,7 @@
 #include "../Src/HDC1080.cpp" // For static helper functions.
 
 using ::testing::_;
+using ::testing::AnyNumber;
 using ::testing::Eq;
 using ::testing::Return;
 using ::testing::ReturnArg;
@@ -109,10 +110,10 @@ public:
 	HDC1080	  hdc1080{i2c};
 
 	inline void disableI2C(void) {
-		ON_CALL(this->i2c, read).WillByDefault(Return(nullopt));
-		ON_CALL(this->i2c, write).WillByDefault(Return(nullopt));
-		ON_CALL(this->i2c, transmit).WillByDefault(Return(nullopt));
-		ON_CALL(this->i2c, receive).WillByDefault(Return(nullopt));
+		EXPECT_CALL(i2c, read).Times(AnyNumber()).WillRepeatedly(Return(nullopt));
+		EXPECT_CALL(i2c, write).Times(AnyNumber()).WillRepeatedly(Return(nullopt));
+		EXPECT_CALL(i2c, transmit).Times(AnyNumber()).WillRepeatedly(Return(nullopt));
+		EXPECT_CALL(i2c, receive).Times(AnyNumber()).WillRepeatedly(Return(nullopt));
 	}
 };
 
