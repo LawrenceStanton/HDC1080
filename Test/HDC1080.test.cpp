@@ -46,7 +46,8 @@ TEST(HDC1080_TestStatic, constructConfigRegisterRandomChecks) {
 			HDC1080::AcquisitionMode::DUAL,
 			HDC1080::TemperatureResolution::A_11BIT,
 			HDC1080::HumidityResolution::A_11BIT,
-			HDC1080::Heater::ON}),
+			HDC1080::Heater::ON
+		}),
 		0b0011'0101'0000'0000u
 	);
 	EXPECT_EQ(
@@ -54,7 +55,8 @@ TEST(HDC1080_TestStatic, constructConfigRegisterRandomChecks) {
 			HDC1080::AcquisitionMode::SINGLE,
 			HDC1080::TemperatureResolution::A_14BIT,
 			HDC1080::HumidityResolution::A_14BIT,
-			HDC1080::Heater::OFF}),
+			HDC1080::Heater::OFF
+		}),
 		0b0000'0000'0000'0000u
 	);
 	EXPECT_EQ(
@@ -62,7 +64,8 @@ TEST(HDC1080_TestStatic, constructConfigRegisterRandomChecks) {
 			HDC1080::AcquisitionMode::SINGLE,
 			HDC1080::TemperatureResolution::A_14BIT,
 			HDC1080::HumidityResolution::A_8BIT,
-			HDC1080::Heater::ON}),
+			HDC1080::Heater::ON
+		}),
 		0b0010'0010'0000'0000u
 	);
 }
@@ -74,7 +77,8 @@ TEST(HDC1080_TestStatic, decodeConfigRegisterRandomChecks) {
 			HDC1080::AcquisitionMode::DUAL,
 			HDC1080::TemperatureResolution::A_11BIT,
 			HDC1080::HumidityResolution::A_11BIT,
-			HDC1080::Heater::ON})
+			HDC1080::Heater::ON
+		})
 	);
 	EXPECT_EQ(
 		decodeConfigRegister(0b0000'0000'0000'0000u),
@@ -82,7 +86,8 @@ TEST(HDC1080_TestStatic, decodeConfigRegisterRandomChecks) {
 			HDC1080::AcquisitionMode::SINGLE,
 			HDC1080::TemperatureResolution::A_14BIT,
 			HDC1080::HumidityResolution::A_14BIT,
-			HDC1080::Heater::OFF})
+			HDC1080::Heater::OFF
+		})
 	);
 	EXPECT_EQ(
 		decodeConfigRegister(0b0010'0010'0000'0000u),
@@ -90,15 +95,31 @@ TEST(HDC1080_TestStatic, decodeConfigRegisterRandomChecks) {
 			HDC1080::AcquisitionMode::SINGLE,
 			HDC1080::TemperatureResolution::A_14BIT,
 			HDC1080::HumidityResolution::A_8BIT,
-			HDC1080::Heater::ON})
+			HDC1080::Heater::ON
+		})
 	);
 }
 
 class MockedI2C : public HDC1080::I2C {
 public:
-	MOCK_METHOD(std::optional<Register>, read, (MemoryAddress addr), (noexcept, override, final));
-	MOCK_METHOD(std::optional<Register>, write, (MemoryAddress addr, Register data), (noexcept, override, final));
-	MOCK_METHOD(std::optional<uint8_t>, transmit, (uint8_t data), (noexcept, override, final));
+	MOCK_METHOD(
+		std::optional<Register>,
+		read,
+		(MemoryAddress addr),
+		(noexcept, override, final)
+	);
+	MOCK_METHOD(
+		std::optional<Register>,
+		write,
+		(MemoryAddress addr, Register data),
+		(noexcept, override, final)
+	);
+	MOCK_METHOD(
+		std::optional<uint8_t>,
+		transmit,
+		(uint8_t data),
+		(noexcept, override, final)
+	);
 	MOCK_METHOD(std::optional<uint8_t>, receive, (), (override, final, noexcept));
 
 	virtual void delay(Duration ms) const noexcept override final {}
@@ -172,7 +193,8 @@ TEST_F(HDC1080_Test, getDeviceIDReturnsEmptyOptionalWhenI2CReadFails) {
 TEST_F(HDC1080_Test, getManufacturerIDNormallyReturnsValue) {
 	const MemoryAddress manufacturerIDRegister = 0xFEu;
 	const Register		manufacturerID		   = 0x5449u;
-	EXPECT_CALL(this->i2c, read(Eq(manufacturerIDRegister))).WillOnce(Return(manufacturerID));
+	EXPECT_CALL(this->i2c, read(Eq(manufacturerIDRegister)))
+		.WillOnce(Return(manufacturerID));
 	EXPECT_EQ(this->hdc1080.getManufacturerID().value(), manufacturerID);
 }
 
@@ -183,11 +205,14 @@ TEST_F(HDC1080_Test, getManufacturerIDReturnsEmptyOptionalWhenI2CReadFails) {
 
 TEST_F(HDC1080_Test, getSerialIDNormallyReturnsValue) {
 	const MemoryAddress serialIDRegisters[] = {0xFBu, 0xFCu, 0xFDu};
-	const Register		serialIDValues[]	= {0xFFFFu, 0xFFFFu, 0xFF80u}; // 1 in every bit that 41-bit Serial ID has
-	// Note: In reality the serial ID can be any 41-bit value, but we're only testing that the bits are read correctly.
+	const Register		serialIDValues[] =
+		{0xFFFFu, 0xFFFFu, 0xFF80u}; // 1 in every bit that 41-bit Serial ID has
+	// Note: In reality the serial ID can be any 41-bit value, but we're only testing that
+	// the bits are read correctly.
 
 	for (uint8_t i = 0; i < 3; i++) {
-		EXPECT_CALL(this->i2c, read(Eq(serialIDRegisters[i]))).WillOnce(Return(serialIDValues[i]));
+		EXPECT_CALL(this->i2c, read(Eq(serialIDRegisters[i])))
+			.WillOnce(Return(serialIDValues[i]));
 	}
 
 	EXPECT_EQ(this->hdc1080.getSerialID().value(), 0x1FFFFFFFFFFu);
@@ -217,7 +242,8 @@ TEST_F(HDC1080_Test, getBatteryStatusReturnsEmptyOptionalWhenI2CReadFails) {
 }
 
 TEST_F(HDC1080_Test, setConfigNormallyWritesValueWithoutReadingIfGivenAllArguments) {
-	// Note: Constructing the register value to write is tested in the constructConfigRegisterRandomChecks test.
+	// Note: Constructing the register value to write is tested in the
+	// constructConfigRegisterRandomChecks test.
 
 	const MemoryAddress configRegister			   = 0x02u;
 	const Register		configInitialValue		   = 0x1000u;
@@ -240,8 +266,8 @@ TEST_F(HDC1080_Test, setConfigReturnsEmptyOptionalWhenGivenNoArguments) {
 }
 
 TEST_F(HDC1080_Test, setConfigNormallyReadsCurrentConfigAndWritesBackNewValues) {
-	const MemoryAddress configRegister			   = 0x02u;
-	const Register		configInitialValue		   = 0x1100u; // Humidity 11-bit, Dual Acquisition
+	const MemoryAddress configRegister	   = 0x02u;
+	const Register		configInitialValue = 0x1100u; // Humidity 11-bit, Dual Acquisition
 	const Register		configExpectedWrittenValue = 0b0001'0101'0000'0000u;
 
 	EXPECT_CALL(this->i2c, read(Eq(configRegister))).WillOnce(Return(configInitialValue));
@@ -256,12 +282,17 @@ TEST_F(HDC1080_Test, setConfigNormallyReadsCurrentConfigAndWritesBackNewValues) 
 	EXPECT_EQ(write.value(), configExpectedWrittenValue);
 }
 
-TEST_F(HDC1080_Test, setConfigShortCircuitsWhenConfigUnchangedAndReturnsCurrentConfigRegisterValue) {
-	const MemoryAddress configRegister	   = 0x02u;
-	const Register		configInitialValue = 0x3500u; // Humidity 11-bit, Temperature 11-bit, Heater ON
+TEST_F(
+	HDC1080_Test,
+	setConfigShortCircuitsWhenConfigUnchangedAndReturnsCurrentConfigRegisterValue
+) {
+	const MemoryAddress configRegister = 0x02u;
+	const Register		configInitialValue =
+		0x3500u; // Humidity 11-bit, Temperature 11-bit, Heater ON
 
 	EXPECT_CALL(this->i2c, read(Eq(configRegister))).WillOnce(Return(configInitialValue));
-	EXPECT_CALL(this->i2c, write).Times(0); // Check that function short circuits without writing.
+	EXPECT_CALL(this->i2c, write)
+		.Times(0); // Check that function short circuits without writing.
 
 	auto write = this->hdc1080.setConfig(
 		{}, //
@@ -299,7 +330,10 @@ TEST_F(HDC1080_X_Test, getTemperatureNormallyReturnsValue) {
 	EXPECT_CALL(this->i2c, transmit(_)).WillRepeatedly(ReturnArg<0>());
 	EXPECT_CALL(this->i2c, receive()).WillOnce(Return(0xABu)).WillOnce(Return(0xCDu));
 
-	EXPECT_FLOAT_EQ(this->hdc1080.getTemperature().value(), convertTemperature(0xABCDu).value());
+	EXPECT_FLOAT_EQ(
+		this->hdc1080.getTemperature().value(),
+		convertTemperature(0xABCDu).value()
+	);
 }
 
 TEST_F(HDC1080_X_Test, getTemperatureReturnsMinusFortyWhenGetTemperatureRegisterFails) {
@@ -346,7 +380,8 @@ TEST_F(HDC1080_X_Test, setAcquisitionModeReturnsEmptyOptionalWhenI2CFails) {
 }
 
 TEST_F(HDC1080_X_Test, setTemperatureResolutionNormallySetsValue) {
-	// Mock changing the config value to 14-bit resolution and then back to 11-bit resolution.
+	// Mock changing the config value to 14-bit resolution and then back to 11-bit
+	// resolution.
 	const Register configInitialValue14BitResolution = 0x1000u;
 	const Register configInitialValue11BitResolution = 0x1400u;
 
@@ -356,23 +391,29 @@ TEST_F(HDC1080_X_Test, setTemperatureResolutionNormallySetsValue) {
 	EXPECT_CALL(this->i2c, write).WillRepeatedly(ReturnArg<1>());
 
 	EXPECT_EQ(
-		this->hdc1080.setTemperatureResolution(HDC1080::TemperatureResolution::A_11BIT).value(),
+		this->hdc1080.setTemperatureResolution(HDC1080::TemperatureResolution::A_11BIT)
+			.value(),
 		configInitialValue11BitResolution
 	);
 
 	EXPECT_EQ(
-		this->hdc1080.setTemperatureResolution(HDC1080::TemperatureResolution::A_14BIT).value(),
+		this->hdc1080.setTemperatureResolution(HDC1080::TemperatureResolution::A_14BIT)
+			.value(),
 		configInitialValue14BitResolution
 	);
 }
 
 TEST_F(HDC1080_X_Test, setTemperatureResolutionReturnsEmptyOptionalWhenI2CFails) {
 	disableI2C();
-	EXPECT_EQ(this->hdc1080.setTemperatureResolution(HDC1080::TemperatureResolution::A_11BIT), nullopt);
+	EXPECT_EQ(
+		this->hdc1080.setTemperatureResolution(HDC1080::TemperatureResolution::A_11BIT),
+		nullopt
+	);
 }
 
 TEST_F(HDC1080_X_Test, setHumidityResolutionNormallySetsValue) {
-	// Mock changing the config value to 11-bit resolution, then 8-bit resolution, then 14-bit resolution.
+	// Mock changing the config value to 11-bit resolution, then 8-bit resolution, then
+	// 14-bit resolution.
 	const Register configInitialValue14BitResolution = 0x1000u;
 	const Register configInitialValue11BitResolution = 0x1100u;
 	const Register configInitialValue8BitResolution	 = 0x1200u;
@@ -399,7 +440,10 @@ TEST_F(HDC1080_X_Test, setHumidityResolutionNormallySetsValue) {
 
 TEST_F(HDC1080_X_Test, setHumidityResolutionReturnsEmptyOptionalWhenI2CFails) {
 	disableI2C();
-	EXPECT_EQ(this->hdc1080.setHumidityResolution(HDC1080::HumidityResolution::A_11BIT), nullopt);
+	EXPECT_EQ(
+		this->hdc1080.setHumidityResolution(HDC1080::HumidityResolution::A_11BIT),
+		nullopt
+	);
 }
 
 TEST_F(HDC1080_X_Test, setHeaterNormallySetsValue) {
@@ -412,8 +456,14 @@ TEST_F(HDC1080_X_Test, setHeaterNormallySetsValue) {
 		.WillOnce(Return(configInitialValueHeaterOff));
 	EXPECT_CALL(this->i2c, write).WillRepeatedly(ReturnArg<1>());
 
-	EXPECT_EQ(this->hdc1080.setHeater(HDC1080::Heater::ON).value(), configInitialValueHeaterOn);
-	EXPECT_EQ(this->hdc1080.setHeater(HDC1080::Heater::OFF).value(), configInitialValueHeaterOff);
+	EXPECT_EQ(
+		this->hdc1080.setHeater(HDC1080::Heater::ON).value(),
+		configInitialValueHeaterOn
+	);
+	EXPECT_EQ(
+		this->hdc1080.setHeater(HDC1080::Heater::OFF).value(),
+		configInitialValueHeaterOff
+	);
 }
 
 TEST_F(HDC1080_X_Test, setHeaterReturnsEmptyOptionalWhenI2CFails) {

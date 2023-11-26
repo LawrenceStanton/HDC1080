@@ -55,12 +55,13 @@ using namespace units::literals;
 #define HDC1080_CONFIG_HUMIDITY_RESOLUTION_MASK	   0x0300u
 
 /**
- * @note The below values are given a wide margin above the maximum conversion time specifications
- * 		 to allow for a imprecise delay timer method.
+ * @note The below values are given a wide margin above the maximum conversion time
+ * specifications to allow for a imprecise delay timer method.
  *
- * @note As of current in this source, the conversion time does not consider the resolution of the measurement.
- * 		 It is possible to reduce the delay time by defining shorter conversion times for lower resolution measurements
- * 		 and amending the measurement register getter methods to use these shorter delay times.
+ * @note As of current in this source, the conversion time does not consider the
+ * resolution of the measurement. It is possible to reduce the delay time by defining
+ * shorter conversion times for lower resolution measurements and amending the measurement
+ * register getter methods to use these shorter delay times.
  */
 #define HDC1080_CONVERSION_TIME_TEMPERATURE 15ms
 #define HDC1080_CONVERSION_TIME_HUMIDITY	15ms
@@ -72,11 +73,17 @@ using MemoryAddress = HDC1080::I2C::MemoryAddress;
 HDC1080::HDC1080(I2C &i2c) : i2c{i2c} {}
 
 std::optional<Register> HDC1080::getTemperatureRegister(void) const {
-	return getMeasurementRegister(HDC1080_TEMPERATURE_ADDR, HDC1080_CONVERSION_TIME_TEMPERATURE);
+	return getMeasurementRegister(
+		HDC1080_TEMPERATURE_ADDR,
+		HDC1080_CONVERSION_TIME_TEMPERATURE
+	);
 }
 
 std::optional<Register> HDC1080::getHumidityRegister(void) const {
-	return getMeasurementRegister(HDC1080_HUMIDITY_ADDR, HDC1080_CONVERSION_TIME_HUMIDITY);
+	return getMeasurementRegister(
+		HDC1080_HUMIDITY_ADDR,
+		HDC1080_CONVERSION_TIME_HUMIDITY
+	);
 }
 
 std::optional<Register> HDC1080::getDeviceID(void) const {
@@ -94,9 +101,10 @@ std::optional<uint64_t> HDC1080::getSerialID(void) const {
 		if (transmission.has_value()) serialID[i] = transmission.value();
 		else return std::nullopt;
 	}
-	const uint64_t serialIdValue = (((uint64_t)serialID[0] & 0xFFFF) << 25) // SERIAL_ID[40:25], register bits [15:0]
-								 | (((uint64_t)serialID[1] & 0xFFFF) << 9)	// SERIAL_ID[24:9], register bits [15:0]
-								 | (((uint64_t)serialID[2] & 0xFF80) >> 7); // SERIAL_ID[8:0], register bits [15:7]
+	const uint64_t serialIdValue =
+		(((uint64_t)serialID[0] & 0xFFFF) << 25) // SERIAL_ID[40:25], register bits [15:0]
+		| (((uint64_t)serialID[1] & 0xFFFF) << 9) // SERIAL_ID[24:9], register bits [15:0]
+		| (((uint64_t)serialID[2] & 0xFF80) >> 7); // SERIAL_ID[8:0], register bits [15:7]
 
 	return serialIdValue;
 }
@@ -105,12 +113,16 @@ std::optional<HDC1080::Battery> HDC1080::getBatteryStatus(void) const {
 	auto transmission = this->i2c.read(HDC1080_CONFIG_ADDR);
 
 	if (transmission.has_value())
-		return static_cast<HDC1080::Battery>(!(transmission.value() & HDC1080_CONFIG_BATTERY_STATUS_MASK));
+		return static_cast<HDC1080::Battery>(
+			!(transmission.value() & HDC1080_CONFIG_BATTERY_STATUS_MASK)
+		);
 	else return std::nullopt;
 }
 
-std::optional<HDC1080::I2C::Register>
-HDC1080::getMeasurementRegister(HDC1080::I2C::MemoryAddress memAddr, Duration waitTime) const {
+std::optional<HDC1080::I2C::Register> HDC1080::getMeasurementRegister(
+	HDC1080::I2C::MemoryAddress memAddr,
+	Duration					waitTime
+) const {
 	if (!this->i2c.transmit(static_cast<uint8_t>(memAddr))) return {};
 
 	this->i2c.delay(waitTime);
@@ -121,7 +133,9 @@ HDC1080::getMeasurementRegister(HDC1080::I2C::MemoryAddress memAddr, Duration wa
 		if (!data) return {};
 	}
 
-	return static_cast<HDC1080::I2C::Register>(transmissionData[0].value() << 8 | transmissionData[1].value());
+	return static_cast<HDC1080::I2C::Register>(
+		transmissionData[0].value() << 8 | transmissionData[1].value()
+	);
 }
 
 struct Config {
@@ -144,9 +158,15 @@ static Register constructConfigRegister(Config config) {
 
 static Config decodeConfigRegister(Register configRegister) {
 	return Config{
-		static_cast<HDC1080::AcquisitionMode>(configRegister & HDC1080_CONFIG_ACQUISITION_MODE_MASK),
-		static_cast<HDC1080::TemperatureResolution>(configRegister & HDC1080_CONFIG_TEMPERATURE_RESOLUTION_MASK),
-		static_cast<HDC1080::HumidityResolution>(configRegister & HDC1080_CONFIG_HUMIDITY_RESOLUTION_MASK),
+		static_cast<HDC1080::AcquisitionMode>(
+			configRegister & HDC1080_CONFIG_ACQUISITION_MODE_MASK
+		),
+		static_cast<HDC1080::TemperatureResolution>(
+			configRegister & HDC1080_CONFIG_TEMPERATURE_RESOLUTION_MASK
+		),
+		static_cast<HDC1080::HumidityResolution>(
+			configRegister & HDC1080_CONFIG_HUMIDITY_RESOLUTION_MASK
+		),
 		static_cast<HDC1080::Heater>(configRegister & HDC1080_CONFIG_HEATER_MASK),
 	};
 }
@@ -196,7 +216,9 @@ std::optional<Register> HDC1080::softReset(void) const {
  * @return The temperature measurement in degrees Celsius.
  */
 static Celsius constexpr convertTemperature(Register temperatureRegister) {
-	return Celsius(temperatureRegister * (165.0f / 65536.0f) - 40.0f); // Refer to HDC1080 datasheet for formula
+	return Celsius(
+		temperatureRegister * (165.0f / 65536.0f) - 40.0f
+	); // Refer to HDC1080 datasheet for formula
 }
 
 /**
@@ -205,13 +227,16 @@ static Celsius constexpr convertTemperature(Register temperatureRegister) {
  * @return The percent relative humidity.
  */
 static RelativeHumidity convertHumidity(Register humidityRegister) {
-	return RelativeHumidity(humidityRegister * (25.0f / 16384.0f) * 100); // Refer to HDC1080 datasheet for formula
+	return RelativeHumidity(
+		humidityRegister * (25.0f / 16384.0f) * 100
+	); // Refer to HDC1080 datasheet for formula
 }
 
 Celsius HDC1080_X::getTemperature(void) const {
 	auto temperatureRegister = getTemperatureRegister();
 
-	if (temperatureRegister.has_value()) return convertTemperature(temperatureRegister.value());
+	if (temperatureRegister.has_value())
+		return convertTemperature(temperatureRegister.value());
 
 	return -40.0_degC;
 }
@@ -228,7 +253,8 @@ std::optional<Register> HDC1080_X::setAcquisitionMode(AcquisitionMode acqMode) c
 	return setConfig(acqMode, std::nullopt, std::nullopt, std::nullopt);
 }
 
-std::optional<Register> HDC1080_X::setTemperatureResolution(TemperatureResolution tRes) const {
+std::optional<Register> HDC1080_X::setTemperatureResolution(TemperatureResolution tRes
+) const {
 	return setConfig(std::nullopt, tRes, std::nullopt, std::nullopt);
 }
 

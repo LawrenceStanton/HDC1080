@@ -40,9 +40,10 @@ public:
 	 * This interface is used to abstract the I2C communication from the HDC1080 class.
 	 * A concrete implementation is then aggregated by the HDC1080 class.
 	 * The concrete implementation of this interface should be provided by the user.
-	 * This also allows for the HDC1080 class to be tested without the need for a real I2C bus.
-	 * The concrete implementation's lifetime must be managed by the user and must outlive the HDC1080 class.
-	 * It is recommended that the concrete implementation be a static object.
+	 * This also allows for the HDC1080 class to be tested without the need for a real I2C
+	 * bus. The concrete implementation's lifetime must be managed by the user and must
+	 * outlive the HDC1080 class. It is recommended that the concrete implementation be a
+	 * static object.
 	 */
 	class I2C {
 	public:
@@ -52,38 +53,47 @@ public:
 		/**
 		 * @brief Read a register from the HDC1080.
 		 *
-		 * @param memoryAddress The HDC1080 internal memory address of the register to read.
-		 * @return std::optional<Register> The value of the register if the read was successful.
+		 * @param memoryAddress The HDC1080 internal memory address of the register to
+		 * read.
+		 * @return std::optional<Register> The value of the register if the read was
+		 * successful.
 		 */
 		virtual std::optional<Register> read(MemoryAddress memoryAddress) noexcept = 0;
 
 		/**
 		 * @brief Write a register to the HDC1080.
 		 *
-		 * @param memoryAddress The HDC1080 internal memory address of the register to write.
+		 * @param memoryAddress The HDC1080 internal memory address of the register to
+		 * write.
 		 * @param data The data to write to the register.
-		 * @return std::optional<Register> The value written to the register if the write was successful.
+		 * @return std::optional<Register> The value written to the register if the write
+		 * was successful.
 		 */
-		virtual std::optional<Register> write(MemoryAddress memoryAddress, Register data) noexcept = 0;
+		virtual std::optional<Register>
+		write(MemoryAddress memoryAddress, Register data) noexcept = 0;
 
 		/**
 		 * @brief Transmit a byte of data to the HDC1080.
 		 *
 		 * @param data The byte of data to transmit.
-		 * @return std::optional<uint8_t> The byte of data transmitted to the HDC1080 if successful.
+		 * @return std::optional<uint8_t> The byte of data transmitted to the HDC1080 if
+		 * successful.
 		 *
-		 * @note This function is normally used to get measurement data from the HDC1080, where some measurement
-		 * delays are necessary, and therefore this driver will assume implementation of the I2C protocol.
+		 * @note This function is normally used to get measurement data from the HDC1080,
+		 * where some measurement delays are necessary, and therefore this driver will
+		 * assume implementation of the I2C protocol.
 		 */
 		virtual std::optional<uint8_t> transmit(uint8_t data) noexcept = 0;
 
 		/**
 		 * @brief Receive a byte of data from the HDC1080.
 		 *
-		 * @return std::optional<uint8_t> The byte of data received from the HDC1080 if successful.
+		 * @return std::optional<uint8_t> The byte of data received from the HDC1080 if
+		 * successful.
 		 *
-		 * @note This function is normally used to get measurement data from the HDC1080, where some measurement
-		 * delays are necessary, and therefore this driver will assume implementation of the I2C protocol.
+		 * @note This function is normally used to get measurement data from the HDC1080,
+		 * where some measurement delays are necessary, and therefore this driver will
+		 * assume implementation of the I2C protocol.
 		 */
 		virtual std::optional<uint8_t> receive(void) noexcept = 0;
 
@@ -143,14 +153,16 @@ public:
 	/**
 	 * @brief Get the Temperature Register
 	 *
-	 * @return std::optional<Register> The fetched value of the temperature register if successful.
+	 * @return std::optional<Register> The fetched value of the temperature register if
+	 * successful.
 	 */
 	std::optional<Register> getTemperatureRegister(void) const;
 
 	/**
 	 * @brief Get the Humidity Register
 	 *
-	 * @return std::optional<Register> The fetched value of the humidity register if successful.
+	 * @return std::optional<Register> The fetched value of the humidity register if
+	 * successful.
 	 */
 	std::optional<Register> getHumidityRegister(void) const;
 
@@ -174,8 +186,8 @@ public:
 	 *
 	 * @return std::optional<uint64_t> The 41-bit serial ID if successful.
 	 *
-	 * @note The serial ID is a 41-bit number by the register map, but the HDC1080 datasheet states "40-bit".
-	 * 		 This driver will assume the register map is correct.
+	 * @note The serial ID is a 41-bit number by the register map, but the HDC1080
+	 * datasheet states "40-bit". This driver will assume the register map is correct.
 	 * @note Unused bits are set to 0.
 	 */
 	std::optional<uint64_t> getSerialID(void) const;
@@ -183,7 +195,8 @@ public:
 	/**
 	 * @brief Get the Battery Status of the HDC1080.
 	 *
-	 * @return std::optional<bool> True if the supply voltage greater than 2V8, false if less than 2V8.
+	 * @return std::optional<bool> True if the supply voltage greater than 2V8, false if
+	 * less than 2V8.
 	 */
 	std::optional<Battery> getBatteryStatus(void) const;
 
@@ -195,11 +208,14 @@ public:
 	 * @param hRes		The resolution of the humidity measurement (8, 11, or 14 bit).
 	 * @param heater	The heater setting (on or off).
 	 *
-	 * @note The heater should only be turned on if necessary for saturated conditions. Refer to the datasheet §8.3.3.
-	 * @note If only a single measurement is desired, the other measurement's resolution may be set to any valid value.
-	 * @note All arguments are optional. Unspecified arguments will remain unchanged. If all arguments are specified,
-	 *    	 the config register is not read before being written.
-	 * @note If no arguments are specified the function short circuits and returns an empty optional.
+	 * @note The heater should only be turned on if necessary for saturated conditions.
+	 * Refer to the datasheet §8.3.3.
+	 * @note If only a single measurement is desired, the other measurement's resolution
+	 * may be set to any valid value.
+	 * @note All arguments are optional. Unspecified arguments will remain unchanged. If
+	 * all arguments are specified, the config register is not read before being written.
+	 * @note If no arguments are specified the function short circuits and returns an
+	 * empty optional.
 	 */
 	std::optional<Register> setConfig(
 		std::optional<AcquisitionMode>		 acqMode, //
@@ -211,7 +227,8 @@ public:
 	/**
 	 * @brief Performs a software reset of the HDC1080.
 	 *
-	 * @return std::optional<Register> The written value of the configuration register if successful.
+	 * @return std::optional<Register> The written value of the configuration register if
+	 * successful.
 	 * @note The written value shall always be 0x8000.
 	 */
 	std::optional<Register> softReset(void) const;
@@ -222,9 +239,11 @@ protected:
 	 *
 	 * @param memAddr The memory address of the register to fetch.
 	 * @param waitTime The measurement conversion delay time in milliseconds.
-	 * @return std::optional<Register> The fetched value of the measurement register if successful.
+	 * @return std::optional<Register> The fetched value of the measurement register if
+	 * successful.
 	 */
-	std::optional<Register> getMeasurementRegister(MemoryAddress memAddr, Duration waitTime = 0ms) const;
+	std::optional<Register>
+	getMeasurementRegister(MemoryAddress memAddr, Duration waitTime = 0ms) const;
 
 /* Registration for Private Member Testing Purposes Only */
 #ifdef HDC1080_GTEST_TESTING
@@ -239,7 +258,10 @@ protected:
 	FRIEND_TEST(HDC1080_Test, getHumidityRegisterReturnsEmptyOptionalWhenI2CReceiveFails);
 
 	FRIEND_TEST(HDC1080_Test, getMeasurementRegisterNormallyReturnsValue);
-	FRIEND_TEST(HDC1080_Test, getMeasurementRegisterReturnsEmptyOptionalWhenI2CReceiveFails);
+	FRIEND_TEST(
+		HDC1080_Test,
+		getMeasurementRegisterReturnsEmptyOptionalWhenI2CReceiveFails
+	);
 #endif
 };
 
